@@ -8,6 +8,7 @@ import java.util.Map;
 public class CdslContext {
     private String currentState;
     private transient CdslContextAuditor auditor;
+//    private yolo getRuntime?
 
     public void setAuditor(CdslContextAuditor auditor) {
         this.auditor = auditor;

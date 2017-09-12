@@ -18,4 +18,11 @@ public class CdslContextAuditor {
         ev.setTo(to);
         System.out.println(ev);
     }
+
+    public void reject(CdslContext ctx, String msg) {
+        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentState(), "reject");
+        ev.setFrom(msg);
+        ev.setTo(ctx.getCurrentState());
+        System.out.println(ev);
+    }
 }

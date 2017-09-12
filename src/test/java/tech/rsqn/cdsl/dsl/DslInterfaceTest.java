@@ -6,6 +6,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.context.CdslContextAuditor;
+import tech.rsqn.cdsl.dsl.guards.EventNameGuardCondition;
+import tech.rsqn.cdsl.dsl.guards.SourceGuardCondition;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
@@ -29,12 +31,17 @@ public class DslInterfaceTest {
 
     private DslTestSupport supp;
     private CdslContext ctx;
+    private CdslContextAuditor auditor;
 
     @BeforeMethod
     public void setUp() throws Exception {
         supp = new DslTestSupport();
         ctx = new CdslContext();
-        ctx.setAuditor(new CdslContextAuditor());
+
+        auditor = new CdslContextAuditor();
+
+        supp.setAuditor(auditor);
+        ctx.setAuditor(auditor);
     }
 
     @Test(expectedExceptions = CdslException.class)
@@ -51,7 +58,7 @@ public class DslInterfaceTest {
 
         CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
         Assert.assertEquals(out.getNextRoute(), "stageTwo");
-        Assert.assertEquals(out.getAction(), "route");
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Route);
     }
 
     @Test
@@ -75,22 +82,62 @@ public class DslInterfaceTest {
             return new CdslOutputEvent().awaitInputAt("awaitHere");
         });
 
-
         CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
-        Assert.assertEquals(out.getAction(), "await");
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
         Assert.assertEquals(out.getNextRoute(), "awaitHere");
     }
 
     @Test
-    public void shouldRejectInvalidGuardCondition() throws Exception {
+    public void shouldRejectInvalidInputEventGuardCondition() throws Exception {
+
+        EventNameGuardCondition guard = new EventNameGuardCondition();
+        guard.setAccept("one");
+        supp.withGuardCondition(guard);
+
         CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
-        Assert.assertEquals(out.getAction(), "getCurrentStepOrNextStepYolo");
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Reject);
     }
 
     @Test
-    public void shouldAcceptValidGuardCondition() throws Exception {
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
-        Assert.assertEquals(out.getAction(), "getCurrentStepOrNextStepYolo");
+    public void shouldAcceptValidInputEventGuardCondition() throws Exception {
+        EventNameGuardCondition guard = new EventNameGuardCondition();
+        guard.setAccept("one");
+        supp.withGuardCondition(guard);
+
+        supp.withDsl((ctx, input) -> {
+            return new CdslOutputEvent().awaitInputAt("awaitHere");
+        });
+
+        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("any","one"));
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
+    }
+
+    @Test
+    public void shouldRejectInvalidSourceGuardCondition() throws Exception {
+        SourceGuardCondition guard = new SourceGuardCondition();
+        guard.setAccept("NO");
+        supp.withGuardCondition(guard);
+
+        supp.withDsl((ctx, input) -> {
+            return new CdslOutputEvent().awaitInputAt("awaitHere");
+        });
+
+        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("any","one"));
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Reject);
+    }
+
+    @Test
+    public void shouldAcceptValidSourceGuardCondition() throws Exception {
+        SourceGuardCondition guard = new SourceGuardCondition();
+        guard.setAccept("YES");
+        supp.withGuardCondition(guard);
+
+        supp.withDsl((ctx, input) -> {
+            return new CdslOutputEvent().awaitInputAt("awaitHere");
+        });
+
+        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("YES","one"));
+        Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
     }
 
 }

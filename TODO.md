@@ -18,4 +18,5 @@
 - Support for Http
 - Support for streams?
 
+- javadoc
 - Samples and Unit tests

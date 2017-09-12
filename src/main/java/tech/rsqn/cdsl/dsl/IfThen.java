@@ -12,7 +12,7 @@ import tech.rsqn.cdsl.model.CdslOutputEvent;
 public class IfThen extends DslSupport {
 
     @Override
-    public CdslOutputEvent execute(CdslContext ctx, CdslInputEvent input) throws CdslException {
+    public CdslOutputEvent execSupport (CdslContext ctx, CdslInputEvent input) throws CdslException {
         return null;
     }
 }
