@@ -1,11 +1,20 @@
-package tech.rsqn.cdsl.flows;
+package tech.rsqn.cdsl.model;
 
-import tech.rsqn.cdsl.model.ElementDefinition;
+
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
+import com.thoughtworks.xstream.annotations.XStreamImplicit;
+import tech.rsqn.cdsl.flows.CdslFlow;
 
 import java.util.List;
 
-public class CdslFlow {
+@XStreamAlias("flow")
+public class FlowDefinition {
+
+    @XStreamAsAttribute
     private String name;
+
+    @XStreamImplicit
     private List<ElementDefinition> elements;
 
     public String getName() {
@@ -15,6 +24,7 @@ public class CdslFlow {
     public void setName(String name) {
         this.name = name;
     }
+
 
     public List<ElementDefinition> getElements() {
         return elements;
