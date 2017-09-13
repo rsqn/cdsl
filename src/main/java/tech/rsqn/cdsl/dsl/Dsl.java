@@ -6,6 +6,6 @@ import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
 @FunctionalInterface
-public interface Dsl {
-    CdslOutputEvent execute(CdslContext ctx, CdslInputEvent input) throws CdslException;
+public interface Dsl<T> {
+    CdslOutputEvent execute(CdslContext ctx, T cfg, CdslInputEvent input) throws CdslException;
 }

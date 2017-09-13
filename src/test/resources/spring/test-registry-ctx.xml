@@ -10,8 +10,7 @@
             http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
     <context:annotation-config/>
-    <context:component-scan base-package="tech.rsqn.cdsl.registry"/>
-    <context:component-scan base-package="tech.rsqn.cdsl.dsl"/>
+    <context:component-scan base-package="tech.rsqn.cdsl"/>
 
 
     <bean id="if-this-test" class="tech.rsqn.cdsl.dsl.DslTestSupport" scope="singleton">

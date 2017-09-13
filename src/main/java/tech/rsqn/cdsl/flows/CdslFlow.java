@@ -1,6 +1,6 @@
 package tech.rsqn.cdsl.flows;
 
-import tech.rsqn.cdsl.model.ElementDefinition;
+import tech.rsqn.cdsl.model.definition.ElementDefinition;
 
 import java.util.List;
 

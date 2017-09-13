@@ -12,7 +12,7 @@ import tech.rsqn.cdsl.model.CdslOutputEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DslSupport implements Dsl {
+public abstract class DslSupport<T> implements Dsl<T> {
     protected static final Logger logger = LoggerFactory.getLogger(DslSupport.class);
     protected transient CdslContextAuditor auditor;
 
@@ -37,7 +37,7 @@ public abstract class DslSupport implements Dsl {
         return null;
     }
 
-    public final CdslOutputEvent execute(CdslContext ctx, CdslInputEvent input) throws CdslException {
+    public final CdslOutputEvent execute(CdslContext ctx, T cfg, CdslInputEvent input) throws CdslException {
         GuardCondition guard = filterForGuardCondition(ctx, input);
         if (guard != null) {
             logger.info("Input " + input + " has been rejected by a guard condition " + guard);
@@ -45,10 +45,10 @@ public abstract class DslSupport implements Dsl {
             return new CdslOutputEvent().reject(guard);
         }
 
-        return execSupport(ctx, input);
+        return execSupport(ctx, cfg, input);
     }
 
-    public abstract CdslOutputEvent execSupport(CdslContext ctx, CdslInputEvent input) throws CdslException;
+    public abstract CdslOutputEvent execSupport(CdslContext ctx, T cfg, CdslInputEvent input) throws CdslException;
 
 
 }

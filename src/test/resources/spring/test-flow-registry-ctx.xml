@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+    <import resource="test-registry-ctx.xml"/>
+
+    <bean id="loader" class="tech.rsqn.cdsl.registry.FlowRegistryLoader">
+        <property name="resources">
+            <list>
+                <value>/cdsl/test-a-flow.xml</value>
+            </list>
+        </property>
+    </bean>
+
+
+</beans>

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @CdslDef("test-support")
-public class DslTestSupport extends DslSupport {
+public class DslTestSupport extends DslSupport<Object> {
     private List<String> behaviours = new ArrayList<>();
     private Dsl c;
 
@@ -30,10 +30,10 @@ public class DslTestSupport extends DslSupport {
         return this;
     }
 
-    public CdslOutputEvent execSupport(CdslContext ctx, CdslInputEvent input) throws CdslException {
+    public CdslOutputEvent execSupport(CdslContext ctx, Object model, CdslInputEvent input) throws CdslException {
         if ( c != null ) {
             try {
-                return c.execute(ctx,input);
+                return c.execute(ctx, model, input);
             } catch (Exception e) {
                throw new CdslException(e);
             }

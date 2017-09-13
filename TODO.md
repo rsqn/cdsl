@@ -20,3 +20,5 @@
 
 - javadoc
 - Samples and Unit tests
+Security framework of XStream not initialized, XStream is probably vulnerable.
+

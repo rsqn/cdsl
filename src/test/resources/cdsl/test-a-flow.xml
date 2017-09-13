@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <cdsl>
-    <flow name="test-flow-a">
-
+    <flow id="test-flow-a">
+        <flowStep id="init">
+            <sayHello message="fred"/>
+        </flowStep>
     </flow>
 </cdsl>

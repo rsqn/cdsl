@@ -1,7 +1,6 @@
-package tech.rsqn.cdsl.model;
+package tech.rsqn.cdsl.dsl;
 
-
-public class ElementDefinition {
+public class SayHelloModel {
     private String name;
 
     public String getName() {

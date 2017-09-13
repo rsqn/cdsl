@@ -1,4 +1,4 @@
-package tech.rsqn.cdsl;
+package tech.rsqn.cdsl.registry;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -6,8 +6,7 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import tech.rsqn.cdsl.dsl.Dsl;
-import tech.rsqn.cdsl.dsl.IfThen;
-import tech.rsqn.cdsl.registry.DslRegistry;
+import tech.rsqn.cdsl.dsl.DslMetadata;
 
 
 @Test
@@ -18,29 +17,35 @@ public class DslRegistryTest extends AbstractTestNGSpringContextTests {
     DslRegistry dslRegistry;
 
     @Test
-    public void shouldDiscoverDslComponentsInClassPathAndResolveByClass() throws Exception {
-        Dsl e = dslRegistry.getDslBean(IfThen.class);
-        Assert.assertNotNull(e);
-    }
-
-    @Test
     public void shouldDiscoverDslComponentsInClassPathAndResolveByName() throws Exception {
-        Dsl ifThen = dslRegistry.getDslBean("if-this-test");
+        DslMetadata meta = new DslMetadata();
+        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
+        meta.setName("if-this-test");
+
+        Dsl ifThen = dslRegistry.resolve(meta);
         Assert.assertNotNull(ifThen);
     }
 
     @Test
     public void shouldHonourSpringProtoType() throws Exception {
-        Dsl e = dslRegistry.getDslBean("if-this-test-proto");
-        Dsl e2 = dslRegistry.getDslBean("if-this-test-proto");
+        DslMetadata meta = new DslMetadata();
+        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
+        meta.setName("if-this-test-proto");
+
+        Dsl e = dslRegistry.resolve(meta);
+        Dsl e2 = dslRegistry.resolve(meta);
 
         Assert.assertNotEquals(e.hashCode(), e2.hashCode());
     }
 
     @Test
     public void shouldHonourSpringSingleton() throws Exception {
-        Dsl e = dslRegistry.getDslBean("if-this-test");
-        Dsl e2 = dslRegistry.getDslBean("if-this-test");
+        DslMetadata meta = new DslMetadata();
+        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
+        meta.setName("if-this-test");
+
+        Dsl e = dslRegistry.resolve(meta);
+        Dsl e2 = dslRegistry.resolve(meta);
         Assert.assertEquals(e, e2);
     }
 }

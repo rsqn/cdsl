@@ -47,16 +47,16 @@ public class DslInterfaceTest {
     @Test(expectedExceptions = CdslException.class)
     public void shouldRaiseError() throws Exception {
         supp.withGenericCdslException();
-        supp.execute(ctx, new CdslInputEvent());
+        supp.execute(ctx, null, new CdslInputEvent());
     }
 
     @Test
     public void shouldPassRoutingInformation() throws Exception {
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             return new CdslOutputEvent().withRoute("stageTwo");
         });
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent());
         Assert.assertEquals(out.getNextRoute(), "stageTwo");
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Route);
     }
@@ -65,12 +65,12 @@ public class DslInterfaceTest {
     public void shouldModifyContext() throws Exception {
         Assert.assertNull(ctx.getVar("myVar"));
 
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             ctx.setVar("myVar", "wasSet");
             return null;
         });
 
-        supp.execute(ctx, new CdslInputEvent());
+        supp.execute(ctx, null, new CdslInputEvent());
         Assert.assertEquals(ctx.getVar("myVar"), "wasSet");
     }
 
@@ -78,11 +78,11 @@ public class DslInterfaceTest {
     @Test
     public void shouldPauseExecution() throws Exception {
 
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             return new CdslOutputEvent().awaitInputAt("awaitHere");
         });
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent());
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
         Assert.assertEquals(out.getNextRoute(), "awaitHere");
     }
@@ -94,7 +94,7 @@ public class DslInterfaceTest {
         guard.setAccept("one");
         supp.withGuardCondition(guard);
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent());
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent());
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Reject);
     }
 
@@ -104,11 +104,11 @@ public class DslInterfaceTest {
         guard.setAccept("one");
         supp.withGuardCondition(guard);
 
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             return new CdslOutputEvent().awaitInputAt("awaitHere");
         });
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("any","one"));
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent().with("any", "one"));
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
     }
 
@@ -118,11 +118,11 @@ public class DslInterfaceTest {
         guard.setAccept("NO");
         supp.withGuardCondition(guard);
 
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             return new CdslOutputEvent().awaitInputAt("awaitHere");
         });
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("any","one"));
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent().with("any", "one"));
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Reject);
     }
 
@@ -132,11 +132,11 @@ public class DslInterfaceTest {
         guard.setAccept("YES");
         supp.withGuardCondition(guard);
 
-        supp.withDsl((ctx, input) -> {
+        supp.withDsl((ctx, model, input) -> {
             return new CdslOutputEvent().awaitInputAt("awaitHere");
         });
 
-        CdslOutputEvent out = supp.execute(ctx, new CdslInputEvent().with("YES","one"));
+        CdslOutputEvent out = supp.execute(ctx, null, new CdslInputEvent().with("YES", "one"));
         Assert.assertEquals(out.getAction(), CdslOutputEvent.Action.Await);
     }
 
