@@ -1,4 +1,12 @@
 package tech.rsqn.cdsl.context;
 
-public class CdslContextRepository {
+
+/**
+ * Repository interface for contexts - locking should happen outside this repository
+ */
+public interface CdslContextRepository {
+
+    CdslContext getContext(String contextId);
+
+    void saveContext(CdslContext contextId);
 }

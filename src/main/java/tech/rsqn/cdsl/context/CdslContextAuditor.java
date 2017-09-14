@@ -5,7 +5,7 @@ import tech.rsqn.cdsl.model.CdslAuditEvent;
 public class CdslContextAuditor {
 
     public void setVar(CdslContext ctx, String k, String v, CdslVariable f) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentState(), "var");
+        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "var");
         ev.setAttr(k);
         ev.setFrom(f != null ? f.toString(): null);
         ev.setTo(v);
@@ -13,16 +13,16 @@ public class CdslContextAuditor {
     }
 
     public void transition(CdslContext ctx, String to) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentState(), "transition");
-        ev.setFrom(ctx.getCurrentState());
+        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "transition");
+        ev.setFrom(ctx.getCurrentStep());
         ev.setTo(to);
         System.out.println(ev);
     }
 
     public void reject(CdslContext ctx, String msg) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentState(), "reject");
+        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "reject");
         ev.setFrom(msg);
-        ev.setTo(ctx.getCurrentState());
+        ev.setTo(ctx.getCurrentStep());
         System.out.println(ev);
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import tech.rsqn.cdsl.model.Flow;
 import tech.rsqn.cdsl.model.definition.FlowDefinition;
 
 @Test
@@ -17,7 +18,7 @@ public class FlowRegistryTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void shouldRegisterTestFlows() throws Exception {
-        FlowDefinition flow = flowRegistry.getFlow("test-flow-a");
+        Flow flow = flowRegistry.getFlow("test-flow-a");
         Assert.assertNotNull(flow);
     }
 

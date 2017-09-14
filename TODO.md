@@ -22,3 +22,7 @@
 - Samples and Unit tests
 Security framework of XStream not initialized, XStream is probably vulnerable.
 
+
+
+Consolidate log format on
+Source, Action, State, Result

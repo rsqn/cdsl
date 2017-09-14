@@ -1,16 +1,17 @@
-package tech.rsqn.cdsl.model.definition;
+package tech.rsqn.cdsl.model;
 
+import org.springframework.beans.BeanUtils;
+import tech.rsqn.cdsl.model.definition.FlowDefinition;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class FlowDefinition {
-
+public class Flow {
     private String id;
     private String defaultStep;
     private String errorStep;
 
-    private List<ElementDefinition> elements = new ArrayList<>();
+    public Flow from(FlowDefinition def) {
+        BeanUtils.copyProperties(def,this);
+        return this;
+    }
 
     public String getId() {
         return id;
@@ -18,14 +19,6 @@ public class FlowDefinition {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public List<ElementDefinition> getElements() {
-        return elements;
-    }
-
-    public void setElements(List<ElementDefinition> elements) {
-        this.elements = elements;
     }
 
     public String getDefaultStep() {

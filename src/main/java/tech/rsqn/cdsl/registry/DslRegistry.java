@@ -20,11 +20,11 @@ public class DslRegistry implements ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(FlowRegistry.class);
 
     private ApplicationContext applicationContext;
-    private Map<String, DslMetadata> registry;
+//    private Map<String, DslMetadata> registry;
     private DslModelBuilder modelBuilder;
 
     public DslRegistry() {
-        registry = new HashMap<>();
+//        registry = new HashMap<>();
         modelBuilder = new DslModelBuilder();
     }
 
@@ -34,17 +34,44 @@ public class DslRegistry implements ApplicationContextAware {
     }
 
 
-    public DslMetadata registerDslDefinition(ElementDefinition flowStep, ElementDefinition def) {
+    public DslMetadata registerDslDefinition(ElementDefinition flowStep, ElementDefinition element) {
         // find and object for this
-        Dsl dsl = resolveUnconfiguredDslBean(def.getName());
-        DslMetadata meta = resolveMeta(dsl);
+        Dsl dsl = (Dsl) applicationContext.getBean(element.getName());
+        DslMetadata.ResolutionStrategy resolutionStrategy = null;
 
-        if (meta.getModelCls() != null) {
-            Object model = modelBuilder.buildModel(def, meta.getModelCls());
-            meta.setModel(model);
+        if (dsl != null) {
+            logger.info("DSL (" + element.getName() + ") resolved to a named spring bean " + dsl.getClass().getName());
+            resolutionStrategy = DslMetadata.ResolutionStrategy.ByName;
+        } else {
+            Map<String, Object> beans = applicationContext.getBeansWithAnnotation(CdslDef.class);
+
+            for (Object o : beans.values()) {
+                if (!(o instanceof Dsl)) {
+                    throw new RuntimeException("Bean found with CdslDef annotation that does not implement Dsl " + o.getClass());
+                }
+
+                dsl = (Dsl) o;
+                CdslDef def = dsl.getClass().getAnnotation(CdslDef.class);
+                if (element.getName().equals(def.value())) {
+                    logger.info("DSL (" + element.getName() + ") resolved to an annotated class " + dsl.getClass().getName());
+                    resolutionStrategy = DslMetadata.ResolutionStrategy.ByType;
+                } else {
+                    dsl = null;
+                }
+            }
         }
 
-        registry.put(meta.getName(), meta);
+        if ( dsl == null ) {
+            throw new RuntimeException("No DSL bean found that matches elementName " + element.getName());
+        }
+
+        DslMetadata meta = resolveMeta(dsl);
+        meta.setResolutionStrategy(resolutionStrategy);
+
+        if (meta.getModelCls() != null) {
+            Object model = modelBuilder.buildModel(element, meta.getModelCls());
+            meta.setModel(model);
+        }
         return meta;
     }
 
@@ -65,38 +92,9 @@ public class DslRegistry implements ApplicationContextAware {
 
         return ret;
     }
-
-    private Dsl resolveUnconfiguredDslBean(String elementName) {
-        Dsl ret = (Dsl) applicationContext.getBean(elementName);
-
-        if (ret != null) {
-            logger.info("DSL (" + elementName + ") resolved to a named spring bean " + ret.getClass().getName());
-            return ret;
-        }
-
-        Map<String, Object> beans = applicationContext.getBeansWithAnnotation(CdslDef.class);
-
-        for (Object o : beans.values()) {
-            if (!(o instanceof Dsl)) {
-                throw new RuntimeException("Bean found with CdslDef annotation that does not implement Dsl " + o.getClass());
-            }
-
-            Dsl dsl = (Dsl) o;
-            CdslDef def = dsl.getClass().getAnnotation(CdslDef.class);
-
-            if (elementName.equals(def.value())) {
-                logger.info("DSL (" + elementName + ") resolved to an annotated class " + dsl.getClass().getName());
-                ret = dsl;
-                return ret;
-            }
-        }
-
-        throw new RuntimeException("No DSL bean found that matches elementName " + elementName);
-    }
-
-    public DslMetadata resolveMeta(String n) {
-        return registry.get(n);
-    }
+//    public DslMetadata resolveMeta(String n) {
+//        return registry.get(n);
+//    }
 
     /**
      * Spring is used to determine whether this is a singleton or prototype

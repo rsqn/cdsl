@@ -1,6 +1,7 @@
 package tech.rsqn.cdsl.definitionsource;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -26,7 +27,6 @@ public class XmlDomDefinitionSource {
         ClassPathResource cpr = new ClassPathResource(resource);
         Reader reader = null;
         try {
-
             reader = new InputStreamReader(cpr.getInputStream());
             String xmlContent = IOUtils.toString(reader);
             return parse(xmlContent);
@@ -53,7 +53,7 @@ public class XmlDomDefinitionSource {
         DocumentDefinition ret = new DocumentDefinition();
         NodeList flows = doc.getElementsByTagName("flow");
         for (int i = 0; i < flows.getLength(); i++) {
-            Node n = flows.item(0);
+            Node n = flows.item(i);
             FlowDefinition flow = loadFlowDefinition(n);
             ret.getFlows().add(flow);
         }
@@ -73,6 +73,8 @@ public class XmlDomDefinitionSource {
     private FlowDefinition loadFlowDefinition(Node node) {
         FlowDefinition ret = new FlowDefinition();
         ret.setId(getAttr(node, "id"));
+        ret.setDefaultStep(getAttr(node, "defaultStep"));
+        ret.setErrorStep(getAttr(node, "errorStep"));
 
         NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -96,7 +98,7 @@ public class XmlDomDefinitionSource {
         ret.setClassifier(classifier);
 
         String text = node.getTextContent();
-        if (! org.springframework.util.StringUtils.isEmpty(text)) {
+        if (StringUtils.isNotEmpty(text)) {
             ret.setTextValue(text.trim());
         }
 

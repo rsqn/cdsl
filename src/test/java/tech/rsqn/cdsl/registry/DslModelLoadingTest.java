@@ -20,32 +20,32 @@ public class DslModelLoadingTest extends AbstractTestNGSpringContextTests {
     @Autowired
     DslRegistry dslRegistry;
 
-    @Test
-    public void shouldPopulateDslModel() throws Exception {
-        DslMetadata<SayHelloModel> meta = dslRegistry.resolveMeta("sayHello");
-        Assert.assertNotNull(meta);
-
-        SayHelloModel model = meta.getModel();
-
-        Assert.assertNotNull(model);
-        Assert.assertEquals(model.getName(),"fred");
-    }
-
-    @Test
-    public void shouldPopulateComplexDslModel() throws Exception {
-        DslMetadata<ComplexModel> meta = dslRegistry.resolveMeta("dslWithComplexModel");
-        Assert.assertNotNull(meta);
-        ComplexModel model = meta.getModel();
-        Assert.assertNotNull(model);
-
-        Assert.assertEquals(model.getaModelProperty(),"testProperty");
-        Assert.assertNotNull(model.getModelChild());
-        Assert.assertEquals(model.getModelChild().getName(),"testChildName");
-        Assert.assertNotNull(model.getModelChild().getaList());
-        Assert.assertEquals(model.getModelChild().getaList().size(),2);
-
-
-    }
+//    @Test
+//    public void shouldPopulateDslModel() throws Exception {
+//        DslMetadata<SayHelloModel> meta = dslRegistry.resolveMeta("sayHello");
+//        Assert.assertNotNull(meta);
+//
+//        SayHelloModel model = meta.getModel();
+//
+//        Assert.assertNotNull(model);
+//        Assert.assertEquals(model.getName(),"fred");
+//    }
+//
+//    @Test
+//    public void shouldPopulateComplexDslModel() throws Exception {
+//        DslMetadata<ComplexModel> meta = dslRegistry.resolveMeta("dslWithComplexModel");
+//        Assert.assertNotNull(meta);
+//        ComplexModel model = meta.getModel();
+//        Assert.assertNotNull(model);
+//
+//        Assert.assertEquals(model.getaModelProperty(),"testProperty");
+//        Assert.assertNotNull(model.getModelChild());
+//        Assert.assertEquals(model.getModelChild().getName(),"testChildName");
+//        Assert.assertNotNull(model.getModelChild().getaList());
+//        Assert.assertEquals(model.getModelChild().getaList().size(),2);
+//
+//
+//    }
 //
 //     <dslWithComplexModel aModelProperty="testProperty">
 //                <modelChild>

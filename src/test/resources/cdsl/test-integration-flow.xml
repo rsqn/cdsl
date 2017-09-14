@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <cdsl>
-    <flow id="test-flow-a">
-
+    <flow id="test-flow-a" defaultStep="init" errorStep="error">
         <flowStep id="init">
             <sayHello name="fred"/>
             <dslWithComplexModel aModelProperty="testProperty">
@@ -15,9 +14,23 @@
                 </modelChild>
             </dslWithComplexModel>
 
+            <finally>
+
+            </finally>
             <!--Validation should happen here-->
             <!--<routeTo target="someOther"/>-->
         </flowStep>
 
+    </flow>
+
+    <flow id="shouldRunHelloWorldAndEndRoute" defaultStep="init" errorStep="error">
+        <flowStep id="init">
+            <sayHello name="fred"/>
+            <routeTo target="end"/>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+        </flowStep>
     </flow>
 </cdsl>

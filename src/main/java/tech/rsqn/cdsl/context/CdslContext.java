@@ -4,26 +4,43 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CdslContext {
-    private String currentState;
-    private transient CdslContextAuditor auditor;
-//    private yolo getRuntime?
+    private String id;
+    private String currentFlow;
+    private String currentStep;
+//    private String currentState;
+    private String lastStatusCode;
 
-    public void setAuditor(CdslContextAuditor auditor) {
-        this.auditor = auditor;
-    }
-
-    public String getCurrentState() {
-        return currentState;
-    }
-
-    public void setCurrentState(String currentState) {
-        this.currentState = currentState;
-    }
-
+//    private CdslState state;
+    private Map<String,Object> transientVars;
     private Map<String,CdslVariable> vars;
 
     public CdslContext() {
         vars = new HashMap<>();
+        transientVars = new HashMap<>();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getCurrentFlow() {
+        return currentFlow;
+    }
+
+    public void setCurrentFlow(String currentFlow) {
+        this.currentFlow = currentFlow;
+    }
+
+    public String getCurrentStep() {
+        return currentStep;
+    }
+
+    public void setCurrentStep(String currentStep) {
+        this.currentStep = currentStep;
     }
 
     public Map<String, CdslVariable> getVars() {
@@ -35,7 +52,7 @@ public class CdslContext {
     }
 
     public void setVar(String k, String v) {
-        auditor.setVar(this,k,v,getVar(k));
+//        auditor.setVar(this,k,v,getVar(k));
         vars.put(k,new CdslVariable().with(v));
     }
 

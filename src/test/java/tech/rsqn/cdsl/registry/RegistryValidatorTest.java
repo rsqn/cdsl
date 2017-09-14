@@ -9,4 +9,9 @@ public class RegistryValidatorTest {
     public void shouldFailBecauseIHaventMadeTests() throws Exception {
         Assert.assertTrue(false);
     }
+
+    @Test
+    public void shouldNotAllowDuplicateStepNames() throws Exception {
+        Assert.assertTrue(false);
+    }
 }

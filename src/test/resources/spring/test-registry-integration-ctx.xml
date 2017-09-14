@@ -6,6 +6,22 @@
 
     <import resource="test-registry-ctx.xml"/>
 
+    <bean id="flowExecutor" class="tech.rsqn.cdsl.execution.FlowExecutor">
+
+    </bean>
+
+    <bean id="lockProvider" class="tech.rsqn.cdsl.concurrency.LockProviderUnitTestSupport">
+
+    </bean>
+
+    <bean id="contextRepository" class="tech.rsqn.cdsl.context.CdslContextRepositoryUnitTestSupport">
+
+    </bean>
+
+    <bean id="contextAuditor" class="tech.rsqn.cdsl.context.CdslContextAuditor">
+
+    </bean>
+
     <bean id="loader" class="tech.rsqn.cdsl.registry.RegistryLoader">
         <property name="resources">
             <list>

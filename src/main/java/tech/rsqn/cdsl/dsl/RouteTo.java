@@ -8,14 +8,12 @@ import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
-@CdslDef("sayHello")
-@CdslModel(SayHelloModel.class)
+@CdslDef("routeTo")
+@CdslModel(RouteToModel.class)
 @Component
-public class SayHello extends DslSupport<SayHelloModel> {
-
+public class RouteTo extends DslSupport<RouteToModel> {
     @Override
-    public CdslOutputEvent execSupport(CdslContext ctx, SayHelloModel config, CdslInputEvent input) throws CdslException {
-        System.out.println("Hello " + config.getName());
-        return null;
+    public CdslOutputEvent execSupport(CdslContext ctx, RouteToModel cfg, CdslInputEvent input) throws CdslException {
+        return new CdslOutputEvent().withRoute(cfg.getTarget());
     }
 }

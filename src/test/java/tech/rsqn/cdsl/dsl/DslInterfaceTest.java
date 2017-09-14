@@ -41,7 +41,6 @@ public class DslInterfaceTest {
         auditor = new CdslContextAuditor();
 
         supp.setAuditor(auditor);
-        ctx.setAuditor(auditor);
     }
 
     @Test(expectedExceptions = CdslException.class)

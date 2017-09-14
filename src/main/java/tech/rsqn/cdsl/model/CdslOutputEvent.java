@@ -3,10 +3,17 @@ package tech.rsqn.cdsl.model;
 import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 
 public class CdslOutputEvent {
-    public enum Action {Route,Await,Reject}
+    public enum Action {Route, Await, Reject, End, Continue}
+
     private Action action;
     private String nextRoute;
     private String meta;
+    private String contextId;
+
+    public CdslOutputEvent withAction(Action a) {
+        this.action = a;
+        return this;
+    }
 
     public CdslOutputEvent withRoute(String r) {
         this.action = Action.Route;
@@ -23,6 +30,14 @@ public class CdslOutputEvent {
     public CdslOutputEvent reject(GuardCondition guardCondition) {
         this.action = Action.Reject;
         return this;
+    }
+
+    public String getContextId() {
+        return contextId;
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
     }
 
     public Action getAction() {
