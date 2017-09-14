@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<cdsl>
+    <flow id="test-flow-a">
+
+        <flowStep id="init">
+            <sayHello name="fred"/>
+            <dslWithComplexModel aModelProperty="testProperty">
+                <modelChild>
+                    <name>testChildName</name>
+                    <aList>
+                        <entry>firstValue</entry>
+                        <entry>secondValue</entry>
+                    </aList>
+                </modelChild>
+            </dslWithComplexModel>
+
+            <!--Validation should happen here-->
+            <!--<routeTo target="someOther"/>-->
+        </flowStep>
+
+    </flow>
+</cdsl>

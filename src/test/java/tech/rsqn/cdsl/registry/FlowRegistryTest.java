@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import tech.rsqn.cdsl.model.definition.FlowDefinition;
 
 @Test
-@ContextConfiguration(locations = {"classpath:/spring/test-flow-registry-ctx.xml"})
+@ContextConfiguration(locations = {"classpath:/spring/test-registry-integration-ctx.xml"})
 public class FlowRegistryTest extends AbstractTestNGSpringContextTests {
 
     @Autowired
@@ -20,4 +20,6 @@ public class FlowRegistryTest extends AbstractTestNGSpringContextTests {
         FlowDefinition flow = flowRegistry.getFlow("test-flow-a");
         Assert.assertNotNull(flow);
     }
+
+
 }

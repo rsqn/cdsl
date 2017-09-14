@@ -6,10 +6,10 @@
 
     <import resource="test-registry-ctx.xml"/>
 
-    <bean id="loader" class="tech.rsqn.cdsl.registry.FlowRegistryLoader">
+    <bean id="loader" class="tech.rsqn.cdsl.registry.RegistryLoader">
         <property name="resources">
             <list>
-                <value>/cdsl/test-a-flow.xml</value>
+                <value>/cdsl/test-integration-flow.xml</value>
             </list>
         </property>
     </bean>

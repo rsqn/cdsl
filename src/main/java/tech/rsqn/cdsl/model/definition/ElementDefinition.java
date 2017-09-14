@@ -15,6 +15,15 @@ public class ElementDefinition {
 
     private Map<String,String> attrs = new HashMap<>();
     private List<ElementDefinition> children = new ArrayList<>();
+    private String textValue;
+
+    public String getTextValue() {
+        return textValue;
+    }
+
+    public void setTextValue(String textValue) {
+        this.textValue = textValue;
+    }
 
     public String getId() {
         return id;

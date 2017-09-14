@@ -12,7 +12,7 @@ public class XmlDomDefinitionSourceTest {
     public void shouldLoadFlow() throws Exception {
         XmlDomDefinitionSource parser = new XmlDomDefinitionSource();
 
-        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-a-flow.xml");
+        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-integration-flow.xml");
 
         Assert.assertNotNull(doc);
         Assert.assertNotNull(doc.getFlows());
@@ -26,7 +26,7 @@ public class XmlDomDefinitionSourceTest {
     @Test
     public void shouldLoadFlowWithElements() throws Exception {
         XmlDomDefinitionSource parser = new XmlDomDefinitionSource();
-        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-a-flow.xml");
+        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-integration-flow.xml");
 
         FlowDefinition flow = doc.getFlows().get(0);
         Assert.assertEquals(flow.getId(), "test-flow-a");
@@ -37,7 +37,7 @@ public class XmlDomDefinitionSourceTest {
     @Test
     public void shouldAssignFirstLevelElementsAsFlowStepsAndSecondLevelAsDslElements() throws Exception {
         XmlDomDefinitionSource parser = new XmlDomDefinitionSource();
-        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-a-flow.xml");
+        DocumentDefinition doc = parser.loadCdslDefinition("/cdsl/test-integration-flow.xml");
 
         FlowDefinition flow = doc.getFlows().get(0);
 

@@ -20,11 +20,12 @@ public class DslRegistry implements ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(FlowRegistry.class);
 
     private ApplicationContext applicationContext;
-
-    private Map<String,DslMetadata> registry;
+    private Map<String, DslMetadata> registry;
+    private DslModelBuilder modelBuilder;
 
     public DslRegistry() {
         registry = new HashMap<>();
+        modelBuilder = new DslModelBuilder();
     }
 
     @Override
@@ -32,11 +33,19 @@ public class DslRegistry implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    public void registerDslDefinition(ElementDefinition flowStep, ElementDefinition def) {
+
+    public DslMetadata registerDslDefinition(ElementDefinition flowStep, ElementDefinition def) {
         // find and object for this
         Dsl dsl = resolveUnconfiguredDslBean(def.getName());
         DslMetadata meta = resolveMeta(dsl);
-        registry.put(meta.getName(),meta);
+
+        if (meta.getModelCls() != null) {
+            Object model = modelBuilder.buildModel(def, meta.getModelCls());
+            meta.setModel(model);
+        }
+
+        registry.put(meta.getName(), meta);
+        return meta;
     }
 
     private DslMetadata resolveMeta(Dsl dsl) {
@@ -47,7 +56,7 @@ public class DslRegistry implements ApplicationContextAware {
         ret.setCls(dsl.getClass());
         ret.setName(def.value());
 
-        if ( modelAttr != null ) {
+        if (modelAttr != null) {
             ret.setModelCls(modelAttr.value());
             logger.info("Model for " + dsl.getClass().getName() + " is " + modelAttr.value().getName());
         } else {
@@ -96,7 +105,7 @@ public class DslRegistry implements ApplicationContextAware {
      * @return
      */
     public Dsl resolve(DslMetadata meta) {
-        if ( meta.getResolutionStrategy().equals(DslMetadata.ResolutionStrategy.ByName)) {
+        if (meta.getResolutionStrategy().equals(DslMetadata.ResolutionStrategy.ByName)) {
             return (Dsl) applicationContext.getBean(meta.getName());
         }
         return (Dsl) applicationContext.getBean(meta.getCls());

@@ -1,7 +1,5 @@
 package tech.rsqn.cdsl.context;
 
-import tech.rsqn.cdsl.model.CdslOutputEvent;
-
 import java.util.HashMap;
 import java.util.Map;
 

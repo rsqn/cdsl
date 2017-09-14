@@ -95,6 +95,11 @@ public class XmlDomDefinitionSource {
         ret.setName(name);
         ret.setClassifier(classifier);
 
+        String text = node.getTextContent();
+        if (! org.springframework.util.StringUtils.isEmpty(text)) {
+            ret.setTextValue(text.trim());
+        }
+
         if (node.getAttributes() != null) {
             for (int i = 0; i < node.getAttributes().getLength(); i++) {
                 Node attrNode = node.getAttributes().item(i);
@@ -109,6 +114,8 @@ public class XmlDomDefinitionSource {
             Node child = children.item(i);
             if ( child.getNodeType() == Node.ELEMENT_NODE) {
                 ret.getChildren().add(loadElementDefinition(child, depth++, ElementDefinition.Classifier.DslElement));
+            } else if ( child.getNodeType() == Node.TEXT_NODE) {
+                ret.setTextValue(child.getTextContent().trim());
             }
         }
 

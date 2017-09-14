@@ -5,14 +5,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
+import tech.rsqn.cdsl.definitionsource.XmlDomDefinitionSource;
 import tech.rsqn.cdsl.model.definition.DocumentDefinition;
 import tech.rsqn.cdsl.model.definition.FlowDefinition;
-import tech.rsqn.cdsl.definitionsource.XmlDomDefinitionSource;
 
 import java.util.List;
 
-public class FlowRegistryLoader implements InitializingBean {
-    private static Logger logger = LoggerFactory.getLogger(FlowRegistryLoader.class);
+public class RegistryLoader implements InitializingBean {
+    private static Logger logger = LoggerFactory.getLogger(RegistryLoader.class);
     private List<String> resources;
 
     @Autowired

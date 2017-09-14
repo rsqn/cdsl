@@ -26,6 +26,13 @@ public class DslRegistryTest extends AbstractTestNGSpringContextTests {
         Assert.assertNotNull(ifThen);
     }
 
+
+    @Test
+    public void shouldPopulateDslModel() throws Exception {
+
+        Assert.assertTrue(false);
+    }
+
     @Test
     public void shouldHonourSpringProtoType() throws Exception {
         DslMetadata meta = new DslMetadata();

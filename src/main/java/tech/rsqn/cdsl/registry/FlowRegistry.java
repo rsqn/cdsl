@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tech.rsqn.cdsl.model.definition.ElementDefinition;
 import tech.rsqn.cdsl.model.definition.FlowDefinition;
-import tech.rsqn.cdsl.dsl.Dsl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,15 +27,11 @@ public class FlowRegistry {
     }
 
     public void submitDefinition(FlowDefinition def) {
-        // lookup definitions, create factories
-
         for (ElementDefinition flowStep : def.getElements()) {
             for (ElementDefinition dsl : flowStep.getChildren()) {
                 dslRegistry.registerDslDefinition(flowStep,dsl);
             }
         }
-
-        // validate
 
         flows.put(def.getId(),def);
     }
