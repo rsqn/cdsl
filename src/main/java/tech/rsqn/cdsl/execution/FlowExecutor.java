@@ -9,6 +9,7 @@ import tech.rsqn.cdsl.concurrency.Lock;
 import tech.rsqn.cdsl.concurrency.LockProvider;
 import tech.rsqn.cdsl.concurrency.LockRejectedException;
 import tech.rsqn.cdsl.context.CdslContext;
+import tech.rsqn.cdsl.context.CdslContextAuditor;
 import tech.rsqn.cdsl.context.CdslContextRepository;
 import tech.rsqn.cdsl.context.CdslRuntime;
 import tech.rsqn.cdsl.dsl.Dsl;
@@ -37,6 +38,9 @@ public class FlowExecutor {
     private LockProvider lockProvider;
 
     @Autowired
+    private CdslContextAuditor auditor;
+
+    @Autowired
     private CdslContextRepository contextRepository;
 
     private int lockRetries = 3;
@@ -63,15 +67,32 @@ public class FlowExecutor {
         this.myIdentifier = myIdentifier;
     }
 
+    public void setFlowRegistry(FlowRegistry flowRegistry) {
+        this.flowRegistry = flowRegistry;
+    }
+
+    public void setDslRegistry(DslRegistry dslRegistry) {
+        this.dslRegistry = dslRegistry;
+    }
+
+    public void setLockProvider(LockProvider lockProvider) {
+        this.lockProvider = lockProvider;
+    }
+
+    public void setContextRepository(CdslContextRepository contextRepository) {
+        this.contextRepository = contextRepository;
+    }
+
     private Object intersectModel(Object src) {
         Object ret = kryo.copy(src);
         return ret;
     }
 
-    private CdslOutputEvent obtainOutputs(CdslContext context, CdslInputEvent inputEvent, FlowStep step, List<DslMetadata> elements) {
+    private CdslOutputEvent obtainOutputs(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent, Flow flow, FlowStep step, List<DslMetadata> elements) {
 
         for (DslMetadata dslMeta : elements) {
             String ll = step.getId() + "." + dslMeta.getName();
+            runtime.getAuditor().execute(context, flow.getId(), step.getId(), dslMeta.getName());
 
             logger.debug("Executing " + ll);
             Dsl dsl = dslRegistry.resolve(dslMeta);
@@ -80,7 +101,7 @@ public class FlowExecutor {
             Object model = intersectModel(dslMeta.getModel());
 
             // execute the step
-            CdslOutputEvent output = dsl.execute(context, model, inputEvent);
+            CdslOutputEvent output = dsl.execute(runtime, context, model, inputEvent);
 
             // handle output if required
             if (output != null) {
@@ -96,7 +117,7 @@ public class FlowExecutor {
     }
 
     public CdslOutputEvent execute(Flow flow, CdslInputEvent inputEvent) {
-        if ( flow == null ) {
+        if (flow == null) {
             throw new RuntimeException("Flow must be provided");
         }
         Lock lock = null;
@@ -121,14 +142,16 @@ public class FlowExecutor {
                 logger.debug(context.getId() + " state is empty, using default defaultStep " + flow.getDefaultStep());
             }
 
+            CdslRuntime runtime = new CdslRuntime();
+            runtime.setAuditor(auditor);
+
             // get the step
             FlowStep step = null;
             FlowStep nextStep = flowRegistry.getFlowStep(context.getCurrentStep());
-            //todo: possibly move this into FlowStep
-            CdslRuntime runtime = new CdslRuntime();
-            CdslOutputEvent output  = null;
+            CdslOutputEvent output = null;
 
             while (nextStep != null) {
+                runtime.getAuditor().transition(context, flow.getId(), nextStep.getId());
                 step = nextStep;
                 nextStep = null;
                 String logPrefix = step.getId();
@@ -136,8 +159,8 @@ public class FlowExecutor {
                 logger.debug("Executing " + step.getId());
                 try {
                     CdslOutputEvent result;
-                    CdslOutputEvent generalOutput = obtainOutputs(context, inputEvent, step, step.getLogicElements());
-                    CdslOutputEvent finalOutput = obtainOutputs(context, inputEvent, step, step.getFinalElements());
+                    CdslOutputEvent generalOutput = obtainOutputs(runtime, context, inputEvent, flow, step, step.getLogicElements());
+                    CdslOutputEvent finalOutput = obtainOutputs(runtime, context, inputEvent, flow ,step, step.getFinalElements());
 
                     if (finalOutput != null) {
                         logger.debug("Result of  " + step.getId() + " provided by final group DSL group");
@@ -153,13 +176,15 @@ public class FlowExecutor {
                     // execute post step tasks
                     for (PostStepTask postStepTask : runtime.getPostStepTasks()) {
                         try {
+                            auditor.executePostStep(context,flow.getId(),step.getId(), postStepTask);
                             postStepTask.runTask();
                         } catch (Exception ex) {
+                            runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
                             logger.debug(logPrefix + " caught exception in post step task - ignoring " + ex.getMessage(), ex);
                         }
                     }
                     runtime.getPostStepTasks().clear();
-                    
+
                     if (CdslOutputEvent.Action.Route.equals(result.getAction())) {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
@@ -175,9 +200,11 @@ public class FlowExecutor {
                     output = result;
 
                 } catch (Exception ex) {
-                    logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(),ex);
+                    logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(), ex);
+                    runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
                     nextStep = flowRegistry.getFlowStep(flow.getErrorStep());
                 }
+
             }
 
             // save context
@@ -190,6 +217,7 @@ public class FlowExecutor {
             // execute post txn tasks
             for (PostCommitTask postCommitTask : runtime.getPostCommitTasks()) {
                 try {
+                    auditor.executePostCommit(context,flow.getId(),postCommitTask);
                     postCommitTask.runTask();
                 } catch (Exception ex) {
                     logger.debug(flow.getId() + " caught exception in post commit task - ignoring " + ex.getMessage(), ex);
@@ -198,7 +226,7 @@ public class FlowExecutor {
             runtime.getPostCommitTasks().clear();
 
             // output something
-            if ( output == null ) {
+            if (output == null) {
                 output = new CdslOutputEvent();
             }
             output.setContextId(context.getId());

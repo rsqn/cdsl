@@ -7,10 +7,6 @@ public class CdslContext {
     private String id;
     private String currentFlow;
     private String currentStep;
-//    private String currentState;
-    private String lastStatusCode;
-
-//    private CdslState state;
     private Map<String,Object> transientVars;
     private Map<String,CdslVariable> vars;
 
@@ -52,7 +48,7 @@ public class CdslContext {
     }
 
     public void setVar(String k, String v) {
-//        auditor.setVar(this,k,v,getVar(k));
+//        runtime.getAuditor().setVar(this,k,v,getVar(k));
         vars.put(k,new CdslVariable().with(v));
     }
 

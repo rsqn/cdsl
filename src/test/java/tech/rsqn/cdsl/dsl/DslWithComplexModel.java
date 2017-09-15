@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.annotations.CdslModel;
 import tech.rsqn.cdsl.context.CdslContext;
+import tech.rsqn.cdsl.context.CdslRuntime;
 import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
@@ -34,7 +35,7 @@ public class DslWithComplexModel extends DslSupport<ComplexModel> {
         return this;
     }
 
-    public CdslOutputEvent execSupport(CdslContext ctx, ComplexModel model, CdslInputEvent input) throws CdslException {
+    public CdslOutputEvent execSupport(CdslRuntime runtime ,CdslContext ctx, ComplexModel model, CdslInputEvent input) throws CdslException {
         return null;
     }
 }

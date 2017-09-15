@@ -1,28 +1,21 @@
 package tech.rsqn.cdsl.context;
 
-import tech.rsqn.cdsl.model.CdslAuditEvent;
+import tech.rsqn.cdsl.execution.PostCommitTask;
+import tech.rsqn.cdsl.execution.PostStepTask;
 
-public class CdslContextAuditor {
+public interface CdslContextAuditor {
 
-    public void setVar(CdslContext ctx, String k, String v, CdslVariable f) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "var");
-        ev.setAttr(k);
-        ev.setFrom(f != null ? f.toString(): null);
-        ev.setTo(v);
-        System.out.println(ev);
-    }
+    void setVar(CdslContext ctx, String k, String v, CdslVariable f);
 
-    public void transition(CdslContext ctx, String to) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "transition");
-        ev.setFrom(ctx.getCurrentStep());
-        ev.setTo(to);
-        System.out.println(ev);
-    }
+    void error(CdslContext ctx, String flow, String step, String dsl, Throwable throwable);
 
-    public void reject(CdslContext ctx, String msg) {
-        CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "reject");
-        ev.setFrom(msg);
-        ev.setTo(ctx.getCurrentStep());
-        System.out.println(ev);
-    }
+    void execute(CdslContext ctx, String flow, String step, String dsl);
+
+    void executePostStep(CdslContext ctx, String flow, String step, PostStepTask p);
+
+    void executePostCommit(CdslContext ctx, String flow, PostCommitTask p);
+
+    void transition(CdslContext ctx, String flow, String toStep);
+
+    void reject(CdslContext ctx, String msg);
 }

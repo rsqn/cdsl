@@ -2,6 +2,7 @@ package tech.rsqn.cdsl.dsl;
 
 import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.context.CdslContext;
+import tech.rsqn.cdsl.context.CdslRuntime;
 import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
@@ -30,10 +31,10 @@ public class DslTestSupport extends DslSupport<Object> {
         return this;
     }
 
-    public CdslOutputEvent execSupport(CdslContext ctx, Object model, CdslInputEvent input) throws CdslException {
+    public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, Object model, CdslInputEvent input) throws CdslException {
         if ( c != null ) {
             try {
-                return c.execute(ctx, model, input);
+                return c.execute(runtime, ctx, model, input);
             } catch (Exception e) {
                throw new CdslException(e);
             }

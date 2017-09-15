@@ -4,9 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.context.CdslContextAuditor;
+import tech.rsqn.cdsl.context.CdslContextAuditorUnitTestSupport;
 import tech.rsqn.cdsl.context.CdslContextRepository;
 import tech.rsqn.cdsl.execution.FlowExecutor;
 import tech.rsqn.cdsl.model.CdslInputEvent;
@@ -28,7 +30,12 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     private CdslContextRepository contextRepository;
 
     @Autowired
-    private CdslContextAuditor auditor;
+    private CdslContextAuditorUnitTestSupport testAuditor;
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+//        testAuditor = new CdslContextAuditorUnitTestSupport();
+    }
 
     @Test
     public void shouldExecuteInitStepIfNoStatePresent() throws Exception {
@@ -44,6 +51,8 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertNotNull(context);
         Assert.assertEquals(context.getCurrentStep(),"end");
 
+        System.out.println(testAuditor);
+        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.init.routeTo"));
         // assert that the auditor passed through ABC
     }
 

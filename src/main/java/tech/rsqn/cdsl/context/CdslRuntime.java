@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CdslRuntime {
-    private CdslContext context;
     private CdslContextAuditor auditor;
     private List<PostStepTask> postStepTasks;
     private List<PostCommitTask> postCommitTasks;
@@ -15,14 +14,6 @@ public class CdslRuntime {
     public CdslRuntime() {
         postStepTasks = new ArrayList<>();
         postCommitTasks = new ArrayList<>();
-    }
-
-    public CdslContext getContext() {
-        return context;
-    }
-
-    public void setContext(CdslContext context) {
-        this.context = context;
     }
 
     public CdslContextAuditor getAuditor() {
