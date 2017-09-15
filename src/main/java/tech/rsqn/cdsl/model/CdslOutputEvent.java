@@ -1,11 +1,12 @@
 package tech.rsqn.cdsl.model;
 
+import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 
 public class CdslOutputEvent {
     public enum Action {Route, Await, Reject, End, Continue}
-
     private Action action;
+    private CdslContext.State contextState;
     private String nextRoute;
     private String meta;
     private String contextId;
@@ -30,6 +31,14 @@ public class CdslOutputEvent {
     public CdslOutputEvent reject(GuardCondition guardCondition) {
         this.action = Action.Reject;
         return this;
+    }
+
+    public CdslContext.State getContextState() {
+        return contextState;
+    }
+
+    public void setContextState(CdslContext.State contextState) {
+        this.contextState = contextState;
     }
 
     public String getContextId() {

@@ -13,24 +13,46 @@
                     </aList>
                 </modelChild>
             </dslWithComplexModel>
-
-            <finally>
-
-            </finally>
-            <!--Validation should happen here-->
-            <!--<routeTo target="someOther"/>-->
         </flowStep>
 
     </flow>
 
     <flow id="shouldRunHelloWorldAndEndRoute" defaultStep="init" errorStep="error">
         <flowStep id="init">
+            <setState val="Alive"/>
             <sayHello name="fred"/>
+            <setVar name="myVar" val="myVal"/>
             <routeTo target="end"/>
         </flowStep>
 
         <flowStep id="end">
             <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </flowStep>
+    </flow>
+
+    <flow id="shouldRaiseExceptionFlow" defaultStep="init" errorStep="error">
+
+        <flowStep id="init">
+            <setState val="Alive"/>
+            <raiseException/>
+        </flowStep>
+
+        <flowStep id="error">
+            <setVar name="errorRaised" val="yesItWas"/>
+            <finally>
+                <endRoute/>
+                <setState val="Error"/>
+            </finally>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
         </flowStep>
     </flow>
 </cdsl>

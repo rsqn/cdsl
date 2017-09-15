@@ -6,15 +6,16 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import tech.rsqn.cdsl.context.CdslContext;
-import tech.rsqn.cdsl.context.CdslContextAuditor;
-import tech.rsqn.cdsl.context.CdslContextAuditorUnitTestSupport;
-import tech.rsqn.cdsl.context.CdslContextRepository;
+import tech.rsqn.cdsl.concurrency.LockProviderUnitTestSupport;
+import tech.rsqn.cdsl.context.*;
 import tech.rsqn.cdsl.execution.FlowExecutor;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 import tech.rsqn.cdsl.model.Flow;
 import tech.rsqn.cdsl.registry.FlowRegistry;
+
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Test
 @ContextConfiguration(locations = {"classpath:/spring/test-registry-integration-ctx.xml"})
@@ -27,10 +28,14 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     private FlowExecutor executor;
 
     @Autowired
-    private CdslContextRepository contextRepository;
+    private CdslContextRepositoryUnitTestSupport contextRepository;
 
     @Autowired
     private CdslContextAuditorUnitTestSupport testAuditor;
+
+    @Autowired
+    private LockProviderUnitTestSupport lockProvider;
+
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -40,7 +45,6 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     @Test
     public void shouldExecuteInitStepIfNoStatePresent() throws Exception {
         Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
-
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
 
         Assert.assertNotNull(output);
@@ -58,49 +62,69 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void shouldRunHelloWorldAndEndRoute() throws Exception {
+        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
 
-//        FlowDefinition flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
-//
-//        executor.execute(flow, new CdslInputEvent().with("test",));
-
-        Assert.assertTrue(false);
+        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.init.sayHello"));
+        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.end.endRoute"));
     }
 
 
     @Test
     public void shouldSetOutputState() throws Exception {
-        Assert.assertTrue(false);
-
+        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
+        Assert.assertEquals(output.getContextState(), CdslContext.State.End);
     }
 
-    @Test
-    public void shouldObtainLock() throws Exception {
-        Assert.assertTrue(false);
 
-    }
 
     @Test
-    public void shouldLoadContextAfterLock() throws Exception {
-        Assert.assertTrue(false);
+    public void shouldObtainLockAndThenUnlock() throws Exception {
+        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
 
-    }
+        final AtomicInteger locks = new AtomicInteger(0);
+        final AtomicInteger unlocks = new AtomicInteger(0);
 
-    @Test
-    public void shouldReleaseLockAfterExecution() throws Exception {
-        Assert.assertTrue(false);
+        lockProvider.onLockCallback((lock) -> {
+            locks.incrementAndGet();
+        });
+
+        lockProvider.onUnLockCallback((lock) -> {
+            unlocks.incrementAndGet();
+        });
+
+        Assert.assertEquals(locks.get(),0);
+
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
+
+        Assert.assertEquals(locks.get(),1);
+        Assert.assertEquals(unlocks.get(),1);
 
     }
 
     @Test
     public void shouldSaveContextAfterExecution() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
 
+        Assert.assertEquals(contextRepository.getContexts().size(),0);
+
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
+        CdslContext context = contextRepository.getContext(output.getContextId());
+
+        Assert.assertEquals(context.getVar("myVar"),"myVal");
     }
 
     @Test
     public void shouldRouteToErrorHandlersOnException() throws Exception {
-        Assert.assertTrue(false);
-
+        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
+        Assert.assertEquals(contextRepository.getContexts().size(),0);
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test","message"));
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("errorRaised"),"yesItWas");
+        Assert.assertEquals(context.getCurrentStep(),"error");
     }
 
     @Test
@@ -176,5 +200,11 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     }
 
+
+    @Test
+    public void shouldPopulateMapModel() throws Exception {
+        Assert.assertTrue(false);
+
+    }
 
 }

@@ -151,7 +151,9 @@ public class FlowExecutor {
             CdslOutputEvent output = null;
 
             while (nextStep != null) {
+                context.setCurrentStep(nextStep.getId());
                 runtime.getAuditor().transition(context, flow.getId(), nextStep.getId());
+
                 step = nextStep;
                 nextStep = null;
                 String logPrefix = step.getId();
@@ -230,6 +232,7 @@ public class FlowExecutor {
                 output = new CdslOutputEvent();
             }
             output.setContextId(context.getId());
+            output.setContextState(context.getState());
             return output;
 
         } catch (LockRejectedException lockRejected) {

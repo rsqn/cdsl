@@ -1,5 +1,7 @@
 package tech.rsqn.cdsl.concurrency;
 
+import tech.rsqn.useful.things.concurrency.Callback;
+import tech.rsqn.useful.things.concurrency.Notifiable;
 import tech.rsqn.useful.things.identifiers.UIDHelper;
 
 import java.util.HashMap;
@@ -20,6 +22,16 @@ public class LockProviderUnitTestSupport implements LockProvider {
         }
     }
 
+    private Callback<Lock> _lockcb = null;
+    private Callback<Lock> _unlockcb = null;
+
+    public void onLockCallback(Callback n) {
+        _lockcb = n;
+    }
+
+    public void onUnLockCallback(Callback n) {
+        _unlockcb = n;
+    }
     /**
      * This is not threadsafe
      * @param grantee
@@ -55,6 +67,10 @@ public class LockProviderUnitTestSupport implements LockProvider {
                 lock.setExpiresMs(lock.getGrantedMs() + durationMs);
                 lock.setId(UIDHelper.generate());
                 locks.put(lock.getGrantedResource(), lock);
+
+                if ( _lockcb != null ) {
+                    _lockcb.call(lock);
+                }
                 return lock;
             }
         }
@@ -64,6 +80,9 @@ public class LockProviderUnitTestSupport implements LockProvider {
 
     @Override
     public void release(Lock lock) throws LockRejectedException {
+        if ( _unlockcb != null ) {
+            _unlockcb.call(lock);
+        }
         locks.remove(lock.getGrantedResource());
     }
 }

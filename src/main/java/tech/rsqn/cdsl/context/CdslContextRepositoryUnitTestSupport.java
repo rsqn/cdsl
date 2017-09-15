@@ -7,6 +7,10 @@ public class CdslContextRepositoryUnitTestSupport implements CdslContextReposito
 
     private Map<String,CdslContext> contexts = new HashMap<>();
 
+    public Map<String, CdslContext> getContexts() {
+        return contexts;
+    }
+
     @Override
     public CdslContext getContext(String contextId) {
         return contexts.get(contextId);

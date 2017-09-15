@@ -4,7 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CdslContext {
+    public enum State {Undefined, Alive, Await, End, Error}
+
     private String id;
+    private State state;
     private String currentFlow;
     private String currentStep;
     private Map<String,Object> transientVars;
@@ -13,6 +16,23 @@ public class CdslContext {
     public CdslContext() {
         vars = new HashMap<>();
         transientVars = new HashMap<>();
+        state = State.Undefined;
+    }
+
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public Map<String, Object> getTransientVars() {
+        return transientVars;
+    }
+
+    public void setTransientVars(Map<String, Object> transientVars) {
+        this.transientVars = transientVars;
     }
 
     public String getId() {
