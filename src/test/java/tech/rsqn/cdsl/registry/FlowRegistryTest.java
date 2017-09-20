@@ -6,8 +6,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import tech.rsqn.cdsl.model.Flow;
-import tech.rsqn.cdsl.model.definition.FlowDefinition;
+import tech.rsqn.cdsl.execution.Flow;
 
 @Test
 @ContextConfiguration(locations = {"classpath:/spring/test-registry-integration-ctx.xml"})

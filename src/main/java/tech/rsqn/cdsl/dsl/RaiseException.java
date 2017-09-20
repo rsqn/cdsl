@@ -9,12 +9,14 @@ import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
+
 @CdslDef("raiseException")
 @CdslModel(MapModel.class)
 @Component
-public class RaiseException extends DslSupport<MapModel> {
+public class RaiseException extends DslSupport<MapModel,Serializable> {
     @Override
-    public CdslOutputEvent execSupport(CdslRuntime runtime,  CdslContext ctx, MapModel cfg, CdslInputEvent input) throws CdslException {
+    public CdslOutputEvent execSupport(CdslRuntime runtime,  CdslContext ctx, MapModel model, CdslInputEvent input) throws CdslException {
         throw new CdslException("RaiseException");
     }
 }

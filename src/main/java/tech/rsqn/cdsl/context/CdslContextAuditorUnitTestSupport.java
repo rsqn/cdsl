@@ -56,7 +56,7 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
         System.out.println(ev);
     }
 
-    public void setVar(CdslContext ctx, String k, String v, CdslVariable f) {
+    public void setVar(CdslContext ctx, String k, String v, Object f) {
         CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "var");
         ev.setAttr(k);
         ev.setFrom(f != null ? f.toString(): null);
@@ -67,7 +67,7 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
     public void execute(CdslContext ctx, String flow, String step, String dsl) {
         CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "execute");
         ev.setFrom(ctx.getCurrentStep());
-        ev.setTo(flow + "." + step + "." + dsl);
+        ev.setTo("execute/" + flow + "." + step + "." + dsl);
         events.add(ev.getTo());
         System.out.println(ev);
     }
@@ -76,7 +76,7 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
         CdslAuditEvent ev = new CdslAuditEvent().with(ctx.getCurrentStep(), "transition");
         ev.setFrom(ctx.getCurrentStep());
         ev.setTo(flow + "." + toStep);
-        events.add(ev.getTo());
+        events.add("transition/" + ev.getTo());
         System.out.println(ev);
     }
 

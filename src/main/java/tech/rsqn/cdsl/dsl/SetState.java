@@ -9,10 +9,12 @@ import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
+
 @CdslDef("setState")
 @CdslModel(SetStateModel.class)
 @Component
-public class SetState  extends DslSupport<SetStateModel>  implements ValidatingDsl<SetStateModel> {
+public class SetState  extends DslSupport<SetStateModel,Serializable>  implements ValidatingDsl<SetStateModel> {
 
     @Override
     public void validate(SetStateModel cfg) throws CdslException {

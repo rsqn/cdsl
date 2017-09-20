@@ -10,21 +10,22 @@ import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.annotations.CdslModel;
 import tech.rsqn.cdsl.dsl.Dsl;
 import tech.rsqn.cdsl.dsl.DslMetadata;
-import tech.rsqn.cdsl.model.definition.ElementDefinition;
+import tech.rsqn.cdsl.definitionsource.ElementDefinition;
+import tech.rsqn.cdsl.dsl.ValidatingDsl;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class DslRegistry implements ApplicationContextAware {
+public class DslInitialisationHelper implements ApplicationContextAware {
     private static final Logger logger = LoggerFactory.getLogger(FlowRegistry.class);
-
     private ApplicationContext applicationContext;
-//    private Map<String, DslMetadata> registry;
     private DslModelBuilder modelBuilder;
 
-    public DslRegistry() {
-//        registry = new HashMap<>();
+    private Map<String,Dsl> injectedDsl;
+
+    public DslInitialisationHelper() {
+        injectedDsl = new HashMap<>();
         modelBuilder = new DslModelBuilder();
     }
 
@@ -33,14 +34,40 @@ public class DslRegistry implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
+    public void inject(String name, Dsl dsl) {
+        injectedDsl.put(name,dsl);
+    }
 
-    public DslMetadata registerDslDefinition(ElementDefinition flowStep, ElementDefinition element) {
+    /**
+     * This method is intended to aid with unit testing (at this time)
+     * @param name
+     * @return
+     */
+    public Dsl resolveInjected(String name) {
+        return injectedDsl.get(name);
+    }
+
+    public DslMetadata buildMetadataForDslElement(ElementDefinition flowStep, ElementDefinition element) {
         // find and object for this
-        Dsl dsl = (Dsl) applicationContext.getBean(element.getName());
+        Dsl dsl = null;
         DslMetadata.ResolutionStrategy resolutionStrategy = null;
 
+
+        dsl = injectedDsl.get(element.getName());
         if (dsl != null) {
-            logger.info("DSL (" + element.getName() + ") resolved to a named spring bean " + dsl.getClass().getName());
+            logger.info("DSL (" + element.getName() + ") resolved to injected Dsl " + dsl.getClass().getName());
+        }
+
+        if ( dsl != null) {
+            try {
+                dsl = (Dsl) applicationContext.getBean(element.getName());
+                logger.info("DSL (" + element.getName() + ") resolved to a named spring bean " + dsl.getClass().getName());
+            } catch (Exception ignore) {
+
+            }
+        }
+
+        if (dsl != null) {
             resolutionStrategy = DslMetadata.ResolutionStrategy.ByName;
         } else {
             Map<String, Object> beans = applicationContext.getBeansWithAnnotation(CdslDef.class);
@@ -55,6 +82,7 @@ public class DslRegistry implements ApplicationContextAware {
                 if (element.getName().equals(def.value())) {
                     logger.info("DSL (" + element.getName() + ") resolved to an annotated class " + dsl.getClass().getName());
                     resolutionStrategy = DslMetadata.ResolutionStrategy.ByType;
+                    break;
                 } else {
                     dsl = null;
                 }
@@ -104,8 +132,19 @@ public class DslRegistry implements ApplicationContextAware {
      */
     public Dsl resolve(DslMetadata meta) {
         if (meta.getResolutionStrategy().equals(DslMetadata.ResolutionStrategy.ByName)) {
+            if ( injectedDsl.containsKey(meta.getName())) {
+              return injectedDsl.get(meta.getName());
+            }
             return (Dsl) applicationContext.getBean(meta.getName());
         }
         return (Dsl) applicationContext.getBean(meta.getCls());
+    }
+
+    public void validate(DslMetadata meta) {
+        Dsl dsl = resolve(meta);
+        if ( dsl instanceof ValidatingDsl ) {
+            ValidatingDsl vdsl = (ValidatingDsl) dsl;
+            vdsl.validate(meta.getModel());
+        }
     }
 }

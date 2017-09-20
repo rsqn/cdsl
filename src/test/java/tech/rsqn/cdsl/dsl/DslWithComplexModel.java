@@ -5,18 +5,18 @@ import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.annotations.CdslModel;
 import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.context.CdslRuntime;
-import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @CdslDef("dslWithComplexModel")
 @CdslModel(ComplexModel.class)
 @Component
-public class DslWithComplexModel extends DslSupport<ComplexModel> {
+public class DslWithComplexModel extends DslSupport<ComplexModel,Serializable> {
     private List<String> behaviours = new ArrayList<>();
     private Dsl c;
 
@@ -27,11 +27,6 @@ public class DslWithComplexModel extends DslSupport<ComplexModel> {
 
     public DslWithComplexModel withDsl(Dsl c) {
         this.c = c;
-        return this;
-    }
-
-    public DslWithComplexModel withGuardCondition(GuardCondition g) {
-        this.guardConditions.add(g);
         return this;
     }
 

@@ -5,7 +5,7 @@ import tech.rsqn.cdsl.execution.PostStepTask;
 
 public interface CdslContextAuditor {
 
-    void setVar(CdslContext ctx, String k, String v, CdslVariable f);
+    void setVar(CdslContext ctx, String k, String v, Object f);
 
     void error(CdslContext ctx, String flow, String step, String dsl, Throwable throwable);
 

@@ -14,6 +14,16 @@ public class CdslInputEvent<T extends Serializable> {
         return this;
     }
 
+    public CdslInputEvent andContextId(String contextId) {
+        this.contextId = contextId;
+        return this;
+    }
+
+    public CdslInputEvent andModel(T model) {
+        this.model = model;
+        return this;
+    }
+
     public String getContextId() {
         return contextId;
     }

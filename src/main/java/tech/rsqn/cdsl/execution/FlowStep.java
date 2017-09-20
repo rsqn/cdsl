@@ -1,8 +1,7 @@
-package tech.rsqn.cdsl.model;
+package tech.rsqn.cdsl.execution;
 
-import org.springframework.beans.BeanUtils;
 import tech.rsqn.cdsl.dsl.DslMetadata;
-import tech.rsqn.cdsl.model.definition.ElementDefinition;
+import tech.rsqn.cdsl.definitionsource.ElementDefinition;
 import tech.rsqn.reflectionhelpers.ReflectionHelper;
 
 import java.util.ArrayList;
@@ -12,8 +11,6 @@ public class FlowStep {
     private String id;
     private List<DslMetadata> logicElements;
     private List<DslMetadata> finalElements;
-
-//    private List<DslMetadata> finalElements;
 
     public FlowStep() {
         logicElements = new ArrayList<>();

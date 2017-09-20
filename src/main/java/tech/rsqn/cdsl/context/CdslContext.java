@@ -1,5 +1,6 @@
 package tech.rsqn.cdsl.context;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,8 +11,8 @@ public class CdslContext {
     private State state;
     private String currentFlow;
     private String currentStep;
-    private Map<String,Object> transientVars;
-    private Map<String,CdslVariable> vars;
+    private Map<String, Object> transientVars;
+    private Map<String, Serializable> vars;
 
     public CdslContext() {
         vars = new HashMap<>();
@@ -25,14 +26,6 @@ public class CdslContext {
 
     public void setState(State state) {
         this.state = state;
-    }
-
-    public Map<String, Object> getTransientVars() {
-        return transientVars;
-    }
-
-    public void setTransientVars(Map<String, Object> transientVars) {
-        this.transientVars = transientVars;
     }
 
     public String getId() {
@@ -59,26 +52,32 @@ public class CdslContext {
         this.currentStep = currentStep;
     }
 
-    public Map<String, CdslVariable> getVars() {
+    public Map<String, Serializable> getVars() {
         return vars;
     }
 
-    public void setVars(Map<String, CdslVariable> vars) {
+    public void setVars(Map<String, Serializable> vars) {
         this.vars = vars;
     }
 
-    public void setVar(String k, String v) {
+    public <T extends Serializable> void putVar(String k, T v) {
 //        runtime.getAuditor().setVar(this,k,v,getVar(k));
-        vars.put(k,new CdslVariable().with(v));
+        vars.put(k, v);
     }
 
-    public <T> T getVar(String k) {
-        CdslVariable v = vars.get(k);
-        if ( v != null ) {
-            return (T) v.getV();
-        }
-        return null;
+    public <T extends Serializable> T fetchVar(String k) {
+        return (T) vars.get(k);
     }
+
+    public void putTransient(String k, String v) {
+        transientVars.put(k, v);
+    }
+
+    public <T> T fetchTransient(String k) {
+        return (T) transientVars.get(k);
+    }
+
+
 
     /*
     public void setVar(String k, Number v) {

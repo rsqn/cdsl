@@ -3,16 +3,16 @@ package tech.rsqn.cdsl.dsl;
 import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.context.CdslRuntime;
-import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @CdslDef("test-support")
-public class DslTestSupport extends DslSupport<Object> {
+public class DslTestSupport extends DslSupport<Object,Serializable> {
     private List<String> behaviours = new ArrayList<>();
     private Dsl c;
 
@@ -23,11 +23,6 @@ public class DslTestSupport extends DslSupport<Object> {
 
     public DslTestSupport withDsl(Dsl c) {
         this.c = c;
-        return this;
-    }
-
-    public DslTestSupport withGuardCondition(GuardCondition g) {
-        this.guardConditions.add(g);
         return this;
     }
 

@@ -11,10 +11,10 @@ import tech.rsqn.cdsl.dsl.DslMetadata;
 
 @Test
 @ContextConfiguration(locations = {"classpath:/spring/test-registry-ctx.xml"})
-public class DslRegistryTest extends AbstractTestNGSpringContextTests {
+public class DslInitialisationHelperTest extends AbstractTestNGSpringContextTests {
 
     @Autowired
-    DslRegistry dslRegistry;
+    DslInitialisationHelper dslInitialisationHelper;
 
     @Test
     public void shouldDiscoverDslComponentsInClassPathAndResolveByName() throws Exception {
@@ -22,15 +22,8 @@ public class DslRegistryTest extends AbstractTestNGSpringContextTests {
         meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
         meta.setName("if-this-test");
 
-        Dsl ifThen = dslRegistry.resolve(meta);
+        Dsl ifThen = dslInitialisationHelper.resolve(meta);
         Assert.assertNotNull(ifThen);
-    }
-
-
-    @Test
-    public void shouldPopulateDslModel() throws Exception {
-
-        Assert.assertTrue(false);
     }
 
     @Test
@@ -39,8 +32,8 @@ public class DslRegistryTest extends AbstractTestNGSpringContextTests {
         meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
         meta.setName("if-this-test-proto");
 
-        Dsl e = dslRegistry.resolve(meta);
-        Dsl e2 = dslRegistry.resolve(meta);
+        Dsl e = dslInitialisationHelper.resolve(meta);
+        Dsl e2 = dslInitialisationHelper.resolve(meta);
 
         Assert.assertNotEquals(e.hashCode(), e2.hashCode());
     }
@@ -51,8 +44,8 @@ public class DslRegistryTest extends AbstractTestNGSpringContextTests {
         meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
         meta.setName("if-this-test");
 
-        Dsl e = dslRegistry.resolve(meta);
-        Dsl e2 = dslRegistry.resolve(meta);
+        Dsl e = dslInitialisationHelper.resolve(meta);
+        Dsl e2 = dslInitialisationHelper.resolve(meta);
         Assert.assertEquals(e, e2);
     }
 }

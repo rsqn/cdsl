@@ -9,10 +9,12 @@ import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
+
 @CdslDef("sayHello")
 @CdslModel(SayHelloModel.class)
 @Component
-public class SayHello extends DslSupport<SayHelloModel> {
+public class SayHello extends DslSupport<SayHelloModel,Serializable> {
 
     @Override
     public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, SayHelloModel config, CdslInputEvent input) throws CdslException {

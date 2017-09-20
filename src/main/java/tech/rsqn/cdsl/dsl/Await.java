@@ -11,12 +11,12 @@ import tech.rsqn.cdsl.model.CdslOutputEvent;
 
 import java.io.Serializable;
 
-@CdslDef("endRoute")
-@CdslModel(MapModel.class)
+@CdslDef("await")
+@CdslModel(AwaitModel.class)
 @Component
-public class EndRoute extends DslSupport<MapModel,Serializable> {
+public class Await extends DslSupport<AwaitModel,Serializable> {
     @Override
-    public CdslOutputEvent execSupport(CdslRuntime runtime,  CdslContext ctx, MapModel model, CdslInputEvent input) throws CdslException {
-        return new CdslOutputEvent().withAction(CdslOutputEvent.Action.End);
+    public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, AwaitModel model, CdslInputEvent input) throws CdslException {
+        return new CdslOutputEvent().awaitInputAt(model.getAt());
     }
 }

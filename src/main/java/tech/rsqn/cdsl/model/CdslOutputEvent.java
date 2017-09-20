@@ -1,9 +1,10 @@
 package tech.rsqn.cdsl.model;
 
 import tech.rsqn.cdsl.context.CdslContext;
-import tech.rsqn.cdsl.dsl.guards.GuardCondition;
 
-public class CdslOutputEvent {
+import java.io.Serializable;
+
+public class CdslOutputEvent<T extends Serializable> {
     public enum Action {Route, Await, Reject, End, Continue}
     private Action action;
     private CdslContext.State contextState;
@@ -28,7 +29,7 @@ public class CdslOutputEvent {
         return this;
     }
 
-    public CdslOutputEvent reject(GuardCondition guardCondition) {
+    public CdslOutputEvent reject() {
         this.action = Action.Reject;
         return this;
     }

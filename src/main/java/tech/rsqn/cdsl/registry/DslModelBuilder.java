@@ -1,6 +1,6 @@
 package tech.rsqn.cdsl.registry;
 
-import tech.rsqn.cdsl.model.definition.ElementDefinition;
+import tech.rsqn.cdsl.definitionsource.ElementDefinition;
 import tech.rsqn.reflectionhelpers.AttributeDescriptor;
 import tech.rsqn.reflectionhelpers.ReflectionHelper;
 

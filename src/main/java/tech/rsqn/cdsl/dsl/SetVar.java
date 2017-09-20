@@ -9,10 +9,12 @@ import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 
+import java.io.Serializable;
+
 @CdslDef("setVar")
 @CdslModel(SetVarModel.class)
 @Component
-public class SetVar extends DslSupport<SetVarModel>  implements ValidatingDsl<SetVarModel> {
+public class SetVar extends DslSupport<SetVarModel,Serializable>  implements ValidatingDsl<SetVarModel> {
 
     @Override
     public void validate(SetVarModel cfg) throws CdslException {
@@ -21,7 +23,7 @@ public class SetVar extends DslSupport<SetVarModel>  implements ValidatingDsl<Se
 
     @Override
     public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, SetVarModel model, CdslInputEvent input) throws CdslException {
-        ctx.setVar(model.getName(),model.getVal());
+        ctx.putVar(model.getName(),model.getVal());
         return null;
     }
 }

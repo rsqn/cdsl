@@ -6,8 +6,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
 import tech.rsqn.cdsl.definitionsource.XmlDomDefinitionSource;
-import tech.rsqn.cdsl.model.definition.DocumentDefinition;
-import tech.rsqn.cdsl.model.definition.FlowDefinition;
+import tech.rsqn.cdsl.definitionsource.DocumentDefinition;
+import tech.rsqn.cdsl.definitionsource.FlowDefinition;
 
 import java.util.List;
 

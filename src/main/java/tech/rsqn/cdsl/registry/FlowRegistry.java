@@ -5,10 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tech.rsqn.cdsl.dsl.DslMetadata;
-import tech.rsqn.cdsl.model.Flow;
-import tech.rsqn.cdsl.model.FlowStep;
-import tech.rsqn.cdsl.model.definition.ElementDefinition;
-import tech.rsqn.cdsl.model.definition.FlowDefinition;
+import tech.rsqn.cdsl.execution.Flow;
+import tech.rsqn.cdsl.execution.FlowStep;
+import tech.rsqn.cdsl.definitionsource.ElementDefinition;
+import tech.rsqn.cdsl.definitionsource.FlowDefinition;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,47 +18,48 @@ public class FlowRegistry {
     private static final Logger logger = LoggerFactory.getLogger(FlowRegistry.class);
 
     @Autowired
-    private DslRegistry dslRegistry;
+    private DslInitialisationHelper dslInitialisationHelper;
 
-    private Map<String,Flow> flows;
-
-    private Map<String,FlowStep> flowSteps;
-
+    private Map<String, Flow> flows;
 
     public FlowRegistry() {
         flows = new HashMap<>();
-        flowSteps = new HashMap<>();
     }
 
     public Flow getFlow(String n) {
         return flows.get(n);
     }
 
-    public FlowStep getFlowStep(String n) {
-        return flowSteps.get(n);
-    }
-
     public void submitDefinition(FlowDefinition def) {
+        Flow flow = new Flow();
+        flow.from(def);
+
         for (ElementDefinition flowStep : def.getElements()) {
+            logger.info("Registering FlowStep : (" + flowStep.getId() + ")");
+
             FlowStep step = new FlowStep().from(flowStep);
-            boolean inFinalBlock = false;
 
             for (ElementDefinition element : flowStep.getChildren()) {
-                if ( element.getName().equals("finally")) {
+                if (element.getName().equals("finally")) {
                     for (ElementDefinition finalElement : element.getChildren()) {
-                        DslMetadata meta = dslRegistry.registerDslDefinition(flowStep,finalElement);
+                        logger.info("Registering finally block DSL (" + flowStep.getId() + "." + element.getName() + ")");
+                        DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, finalElement);
+                        dslInitialisationHelper.validate(meta);
                         step.addFinalElement(meta);
+
                     }
                 } else {
-                    DslMetadata meta = dslRegistry.registerDslDefinition(flowStep,element);
+                    logger.info("Registering DSL (" + flowStep.getId() + "." + element.getName() + ")");
+                    DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, element);
+                    dslInitialisationHelper.validate(meta);
                     step.addLogicElement(meta);
                 }
 
             }
-            flowSteps.put(flowStep.getId(),step);
+            flow.putStep(flowStep.getId(), step);
         }
 
-        flows.put(def.getId(),new Flow().from(def));
+        flows.put(def.getId(), flow);
     }
 
 }

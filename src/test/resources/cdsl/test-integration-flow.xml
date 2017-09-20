@@ -55,4 +55,91 @@
             </finally>
         </flowStep>
     </flow>
+
+
+    <flow id="shouldRouteThroughAThenBThenAwaitAtC" defaultStep="init" errorStep="error">
+        <flowStep id="init">
+            <setState val="Alive"/>
+            <routeTo target="a"/>
+        </flowStep>
+
+        <flowStep id="a">
+            <routeTo target="b"/>
+        </flowStep>
+
+        <flowStep id="b">
+            <await at="c"/>
+        </flowStep>
+
+        <flowStep id="c" >
+            <whiteList onFailure="Reject" names="message, other" />
+            <routeTo target="end"/>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </flowStep>
+    </flow>
+
+    <flow id="shouldAwaitAtB" defaultStep="init" errorStep="error">
+        <flowStep id="init">
+            <setState val="Alive"/>
+            <routeTo target="a"/>
+        </flowStep>
+
+        <flowStep id="a">
+            <await at="b"/>
+        </flowStep>
+
+        <flowStep id="b">
+            <whiteList names="message" onFailure="Route" to="end"/>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </flowStep>
+    </flow>
+
+
+    <flow id="shouldProcessInputModelA" defaultStep="init" errorStep="error">
+        <flowStep id="init">
+            <setState val="Alive"/>
+            <routeTo target="reverseInputModel"/>
+        </flowStep>
+
+        <flowStep id="reverseInputModel">
+            <reverseCustomInput outVar="myChosenVar"/>
+            <routeTo target="end"/>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+                <!--<outCome varName="myChosenVar"/>-->
+            </finally>
+        </flowStep>
+    </flow>
+
+    <flow id="shouldSendBufferedOutputMessages" defaultStep="init" errorStep="error">
+        <flowStep id="init">
+            <injected name="injectedOne"/>
+            <routeTo target="end"/>
+        </flowStep>
+
+        <flowStep id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </flowStep>
+    </flow>
+
+
 </cdsl>

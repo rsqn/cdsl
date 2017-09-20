@@ -16,9 +16,7 @@ import tech.rsqn.cdsl.dsl.Dsl;
 import tech.rsqn.cdsl.dsl.DslMetadata;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
-import tech.rsqn.cdsl.model.Flow;
-import tech.rsqn.cdsl.model.FlowStep;
-import tech.rsqn.cdsl.registry.DslRegistry;
+import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 import tech.rsqn.useful.things.identifiers.UIDHelper;
 
@@ -32,7 +30,7 @@ public class FlowExecutor {
     private FlowRegistry flowRegistry;
 
     @Autowired
-    private DslRegistry dslRegistry;
+    private DslInitialisationHelper dslInitialisationHelper;
 
     @Autowired
     private LockProvider lockProvider;
@@ -71,8 +69,8 @@ public class FlowExecutor {
         this.flowRegistry = flowRegistry;
     }
 
-    public void setDslRegistry(DslRegistry dslRegistry) {
-        this.dslRegistry = dslRegistry;
+    public void setDslInitialisationHelper(DslInitialisationHelper dslInitialisationHelper) {
+        this.dslInitialisationHelper = dslInitialisationHelper;
     }
 
     public void setLockProvider(LockProvider lockProvider) {
@@ -95,7 +93,7 @@ public class FlowExecutor {
             runtime.getAuditor().execute(context, flow.getId(), step.getId(), dslMeta.getName());
 
             logger.debug("Executing " + ll);
-            Dsl dsl = dslRegistry.resolve(dslMeta);
+            Dsl dsl = dslInitialisationHelper.resolve(dslMeta);
 
             // build or intersect model
             Object model = intersectModel(dslMeta.getModel());
@@ -133,7 +131,7 @@ public class FlowExecutor {
             } else {
                 // lock and load an existing context
                 lock = lockProvider.obtain(myIdentifier, "context/" + inputEvent.getContextId(), lockDuration, lockRetries, lockRetryMaxDuration);
-                contextRepository.getContext(inputEvent.getContextId());
+                context = contextRepository.getContext(inputEvent.getContextId());
             }
 
             // get or determine current step
@@ -147,7 +145,7 @@ public class FlowExecutor {
 
             // get the step
             FlowStep step = null;
-            FlowStep nextStep = flowRegistry.getFlowStep(context.getCurrentStep());
+            FlowStep nextStep = flow.fetchStep(context.getCurrentStep());
             CdslOutputEvent output = null;
 
             while (nextStep != null) {
@@ -162,7 +160,7 @@ public class FlowExecutor {
                 try {
                     CdslOutputEvent result;
                     CdslOutputEvent generalOutput = obtainOutputs(runtime, context, inputEvent, flow, step, step.getLogicElements());
-                    CdslOutputEvent finalOutput = obtainOutputs(runtime, context, inputEvent, flow ,step, step.getFinalElements());
+                    CdslOutputEvent finalOutput = obtainOutputs(runtime, context, inputEvent, flow, step, step.getFinalElements());
 
                     if (finalOutput != null) {
                         logger.debug("Result of  " + step.getId() + " provided by final group DSL group");
@@ -178,7 +176,7 @@ public class FlowExecutor {
                     // execute post step tasks
                     for (PostStepTask postStepTask : runtime.getPostStepTasks()) {
                         try {
-                            auditor.executePostStep(context,flow.getId(),step.getId(), postStepTask);
+                            auditor.executePostStep(context, flow.getId(), step.getId(), postStepTask);
                             postStepTask.runTask();
                         } catch (Exception ex) {
                             runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
@@ -187,12 +185,14 @@ public class FlowExecutor {
                     }
                     runtime.getPostStepTasks().clear();
 
+                    //todo - clean up where stater is set
                     if (CdslOutputEvent.Action.Route.equals(result.getAction())) {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
-                        nextStep = flowRegistry.getFlowStep(result.getNextRoute());
+                        nextStep = flow.fetchStep(result.getNextRoute());
                     } else if (CdslOutputEvent.Action.Await.equals(result.getAction())) {
                         logger.debug(logPrefix + " awaiting at " + result.getNextRoute());
+                        context.setState(CdslContext.State.Await);
                         context.setCurrentStep(result.getNextRoute());
                     } else if (CdslOutputEvent.Action.End.equals(result.getAction())) {
                         logger.debug(logPrefix + " end at " + result.getNextRoute());
@@ -204,7 +204,7 @@ public class FlowExecutor {
                 } catch (Exception ex) {
                     logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(), ex);
                     runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
-                    nextStep = flowRegistry.getFlowStep(flow.getErrorStep());
+                    nextStep = flow.fetchStep(flow.getErrorStep());
                 }
 
             }
@@ -219,7 +219,7 @@ public class FlowExecutor {
             // execute post txn tasks
             for (PostCommitTask postCommitTask : runtime.getPostCommitTasks()) {
                 try {
-                    auditor.executePostCommit(context,flow.getId(),postCommitTask);
+                    auditor.executePostCommit(context, flow.getId(), postCommitTask);
                     postCommitTask.runTask();
                 } catch (Exception ex) {
                     logger.debug(flow.getId() + " caught exception in post commit task - ignoring " + ex.getMessage(), ex);
@@ -231,6 +231,7 @@ public class FlowExecutor {
             if (output == null) {
                 output = new CdslOutputEvent();
             }
+
             output.setContextId(context.getId());
             output.setContextState(context.getState());
             return output;

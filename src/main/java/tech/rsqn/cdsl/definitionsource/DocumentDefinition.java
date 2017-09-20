@@ -1,4 +1,4 @@
-package tech.rsqn.cdsl.model.definition;
+package tech.rsqn.cdsl.definitionsource;
 
 
 import java.util.ArrayList;
