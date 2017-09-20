@@ -7,11 +7,14 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import tech.rsqn.cdsl.concurrency.LockProviderUnitTestSupport;
-import tech.rsqn.cdsl.context.*;
-import tech.rsqn.cdsl.dsl.DslSupport;
+import tech.rsqn.cdsl.context.CdslContext;
+import tech.rsqn.cdsl.context.CdslContextAuditorUnitTestSupport;
+import tech.rsqn.cdsl.context.CdslContextRepositoryUnitTestSupport;
 import tech.rsqn.cdsl.dsl.MapModel;
+import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
+import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,6 +25,9 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @Autowired
     private FlowRegistry flowRegistry;
+
+    @Autowired
+    private DslInitialisationHelper dslHelper;
 
     @Autowired
     private FlowExecutor executor;
@@ -38,7 +44,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @BeforeMethod
     public void setUp() throws Exception {
-//        testAuditor = new CdslContextAuditorUnitTestSupport();
+        contextRepository.getContexts().clear();
     }
 
     @Test
@@ -208,35 +214,83 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void shouldBufferOutputMessages() throws Exception {
-//        Flow flow = flowRegistry.getFlow("shouldSendBufferedOutputMessages");
-//        Assert.assertEquals(contextRepository.getContexts().size(), 0);
-//
-//        MapModel inputModel = new MapModel();
-//        inputModel.put("sendMessage","one");
-//
-//        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
-//
-//        CdslContext context = contextRepository.getContext(output.getContextId());
-//
-//        Assert.assertEquals(context.fetchVar("output"), "end");
-//        Assert.assertEquals(context.getState(), CdslContext.State.End);
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
+
+        final AtomicInteger ctr = new AtomicInteger(0);
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            runtime.postCommit(()-> {
+                ctr.incrementAndGet();
+            });
+            return null;
+        });
+
+        Assert.assertEquals(ctr.get(),0);
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+        Assert.assertEquals(ctr.get(),1);
     }
 
-    @Test
+    @Test(expectedExceptions = CdslException.class)
     public void shouldRaiseErrorOnIncorrectTransactionId() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
 
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            runtime.setTransactionId("123");
+            return null;
+        });
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
     }
 
 
     @Test
     public void shouldAuditVariableChanges() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            ctx.putVar("testChange","testValue");
+            return null;
+        });
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+
+        Assert.assertTrue(testAuditor.didTransition("setVar/testChange"));
     }
 
     @Test
     public void shouldAuditStepChanges() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            return null;
+        });
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+
+        Assert.assertTrue(testAuditor.didTransition("transition/shouldRunInjected.end"));
+
+    }
+
+    @Test(expectedExceptions = CdslException.class)
+    public void shouldNotRunIfStateIsEnd() throws Exception {
+
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            return null;
+        });
+
+        CdslOutputEvent out = executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+
+        Assert.assertTrue(testAuditor.didTransition("transition/shouldRunInjected.end"));
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel).andContextId(out.getContextId()));
+
 
     }
 
@@ -253,11 +307,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     }
 
-    @Test
-    public void shouldNotRunIfStateIsEnd() throws Exception {
-        Assert.assertTrue(false);
 
-    }
 
 
     @Test

@@ -61,6 +61,10 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
         ev.setAttr(k);
         ev.setFrom(f != null ? f.toString(): null);
         ev.setTo(v);
+
+        events.add("setVar/" + k);
+
+
         System.out.println(ev);
     }
 

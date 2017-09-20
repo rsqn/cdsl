@@ -14,6 +14,7 @@ import tech.rsqn.cdsl.context.CdslContextRepository;
 import tech.rsqn.cdsl.context.CdslRuntime;
 import tech.rsqn.cdsl.dsl.Dsl;
 import tech.rsqn.cdsl.dsl.DslMetadata;
+import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 import tech.rsqn.cdsl.registry.DslInitialisationHelper;
@@ -120,6 +121,7 @@ public class FlowExecutor {
         }
         Lock lock = null;
         CdslContext context = null;
+        CdslRuntime runtime = null;
 
         try {
             if (StringUtils.isEmpty(inputEvent.getContextId())) {
@@ -127,11 +129,16 @@ public class FlowExecutor {
                 context = new CdslContext();
                 context.setId(UIDHelper.generate());
                 lock = lockProvider.obtain(myIdentifier, "context/" + context.getId(), lockDuration, lockRetries, lockRetryMaxDuration);
-                contextRepository.saveContext(context);
+                contextRepository.saveContext(lock.getId(), context);
+                context = contextRepository.getContext(lock.getId(), context.getId());
             } else {
                 // lock and load an existing context
                 lock = lockProvider.obtain(myIdentifier, "context/" + inputEvent.getContextId(), lockDuration, lockRetries, lockRetryMaxDuration);
-                context = contextRepository.getContext(inputEvent.getContextId());
+                context = contextRepository.getContext(lock.getId(), inputEvent.getContextId());
+
+                if (CdslContext.State.End == context.getState()) {
+                    throw new CdslException("State of " + context.getId() + " is End");
+                }
             }
 
             // get or determine current step
@@ -140,8 +147,10 @@ public class FlowExecutor {
                 logger.debug(context.getId() + " state is empty, using default defaultStep " + flow.getDefaultStep());
             }
 
-            CdslRuntime runtime = new CdslRuntime();
+            runtime = new CdslRuntime();
             runtime.setAuditor(auditor);
+            runtime.setTransactionId(lock.getId());
+            context.setRuntime(runtime);
 
             // get the step
             FlowStep step = null;
@@ -186,17 +195,17 @@ public class FlowExecutor {
                     runtime.getPostStepTasks().clear();
 
                     //todo - clean up where stater is set
-                    if (CdslOutputEvent.Action.Route.equals(result.getAction())) {
+                    if (CdslOutputEvent.Action.Route == result.getAction()) {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
                         nextStep = flow.fetchStep(result.getNextRoute());
-                    } else if (CdslOutputEvent.Action.Await.equals(result.getAction())) {
+                    } else if (CdslOutputEvent.Action.Await == result.getAction()) {
                         logger.debug(logPrefix + " awaiting at " + result.getNextRoute());
                         context.setState(CdslContext.State.Await);
                         context.setCurrentStep(result.getNextRoute());
-                    } else if (CdslOutputEvent.Action.End.equals(result.getAction())) {
+                    } else if (CdslOutputEvent.Action.End == result.getAction()) {
                         logger.debug(logPrefix + " end at " + result.getNextRoute());
-                    } else if (CdslOutputEvent.Action.Reject.equals(result.getAction())) {
+                    } else if (CdslOutputEvent.Action.Reject == result.getAction()) {
                         logger.debug(logPrefix + " rejected" + result.getNextRoute());
                     }
                     output = result;
@@ -204,13 +213,17 @@ public class FlowExecutor {
                 } catch (Exception ex) {
                     logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(), ex);
                     runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
-                    nextStep = flow.fetchStep(flow.getErrorStep());
+                    if (StringUtils.isNotEmpty(flow.getErrorStep())) {
+                        nextStep = flow.fetchStep(flow.getErrorStep());
+                    } else {
+                        throw new CdslException(ex);
+                    }
                 }
 
             }
 
             // save context
-            contextRepository.saveContext(context);
+            contextRepository.saveContext(runtime.getTransactionId(), context);
 
             // release lock
             lockProvider.release(lock);
@@ -234,11 +247,17 @@ public class FlowExecutor {
 
             output.setContextId(context.getId());
             output.setContextState(context.getState());
+
+            runtime = null;
+
             return output;
 
         } catch (LockRejectedException lockRejected) {
             logger.warn("Lock Rejected ", lockRejected);
         } finally {
+//            if ( runtime != null ) {
+//                contextRepository.saveContext(runtime.getTransactionId(),context);
+//            }
             if (lock != null)
                 lockProvider.release(lock);
         }

@@ -8,34 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CdslRuntime {
+    private String transactionId;
     private CdslContextAuditor auditor;
     private List<PostStepTask> postStepTasks;
     private List<PostCommitTask> postCommitTasks;
-    private List<CdslOutputEvent> outputs;
 
     public CdslRuntime() {
         postStepTasks = new ArrayList<>();
         postCommitTasks = new ArrayList<>();
-        outputs = new ArrayList<>();
     }
 
-    public void appendOutput(CdslOutputEvent eventWithOutput) {
-        outputs.add(eventWithOutput);
+    public void postStep(PostStepTask task) {
+        postStepTasks.add(task);
     }
 
-    public List<CdslOutputEvent> getOutputs() {
-        return outputs;
+    public void postCommit(PostCommitTask task) {
+        postCommitTasks.add(task);
     }
 
-    public CdslOutputEvent getLatestOutput(CdslOutputEvent ev) {
-        if (outputs.size() > 0) {
-            return outputs.get(outputs.size() - 1);
-        }
-        return null;
+    public String getTransactionId() {
+        return transactionId;
     }
 
-    public void setOutputs(List<CdslOutputEvent> outputs) {
-        this.outputs = outputs;
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
     }
 
     public CdslContextAuditor getAuditor() {

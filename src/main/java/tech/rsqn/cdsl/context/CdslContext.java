@@ -7,6 +7,8 @@ import java.util.Map;
 public class CdslContext {
     public enum State {Undefined, Alive, Await, End, Error}
 
+    private transient CdslRuntime runtime;
+
     private String id;
     private State state;
     private String currentFlow;
@@ -18,6 +20,10 @@ public class CdslContext {
         vars = new HashMap<>();
         transientVars = new HashMap<>();
         state = State.Undefined;
+    }
+
+    public void setRuntime(CdslRuntime runtime) {
+        this.runtime = runtime;
     }
 
     public State getState() {
@@ -61,7 +67,7 @@ public class CdslContext {
     }
 
     public <T extends Serializable> void putVar(String k, T v) {
-//        runtime.getAuditor().setVar(this,k,v,getVar(k));
+        runtime.getAuditor().setVar(this,k,v.toString(),vars.get(k));
         vars.put(k, v);
     }
 

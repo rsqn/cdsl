@@ -127,7 +127,8 @@
         </flowStep>
     </flow>
 
-    <flow id="shouldSendBufferedOutputMessages" defaultStep="init" errorStep="error">
+
+    <flow id="shouldRunInjected" defaultStep="init" >
         <flowStep id="init">
             <injected name="injectedOne"/>
             <routeTo target="end"/>
@@ -140,6 +141,5 @@
             </finally>
         </flowStep>
     </flow>
-
 
 </cdsl>
