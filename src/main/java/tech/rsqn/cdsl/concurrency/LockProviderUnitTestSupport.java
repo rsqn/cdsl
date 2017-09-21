@@ -25,11 +25,11 @@ public class LockProviderUnitTestSupport implements LockProvider {
     private Callback<Lock> _lockcb = null;
     private Callback<Lock> _unlockcb = null;
 
-    public void onLockCallback(Callback n) {
+    public void onLockCallback(Callback<Lock> n) {
         _lockcb = n;
     }
 
-    public void onUnLockCallback(Callback n) {
+    public void onUnLockCallback(Callback<Lock> n) {
         _unlockcb = n;
     }
     /**

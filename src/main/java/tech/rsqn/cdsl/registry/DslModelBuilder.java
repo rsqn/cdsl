@@ -1,6 +1,7 @@
 package tech.rsqn.cdsl.registry;
 
 import tech.rsqn.cdsl.definitionsource.ElementDefinition;
+import tech.rsqn.cdsl.dsl.MapModel;
 import tech.rsqn.reflectionhelpers.AttributeDescriptor;
 import tech.rsqn.reflectionhelpers.ReflectionHelper;
 
@@ -21,7 +22,6 @@ public class DslModelBuilder {
     }
 
     private void recurseElementAndPopulateModel(ElementDefinition elem, Object o) throws Exception {
-        // Set attributes
 
 
         Map<String, AttributeDescriptor> attrs = ReflectionHelper.collectAttributeMetaDataAsMapWithPossibleNames(o);
@@ -29,31 +29,36 @@ public class DslModelBuilder {
         for (String k : elem.getAttrs().keySet()) {
             String v = elem.getAttrs().get(k);
 
-            AttributeDescriptor attr = attrs.get(k);
-            if (attr == null) {
-                throw new RuntimeException("Unable to find field " + k + " in " + o.getClass().getName());
+            if (o instanceof MapModel) {
+                ((MapModel) o).put(k, v);
+            } else {
+                AttributeDescriptor attr = attrs.get(k);
+                if (attr == null) {
+                    throw new RuntimeException("Unable to find field " + k + " in " + o.getClass().getName());
+                }
+                attr.executeSetter(o, v);
             }
-
-            attr.executeSetter(o, v);
         }
 
-        // Set elements
         for (ElementDefinition child : elem.getChildren()) {
             String k = child.getName();
-            AttributeDescriptor attr = attrs.get(k);
-            if (attr == null) {
-                throw new RuntimeException("Unable to find field " + k + " in " + o.getClass().getName());
-            }
-
-            if (isConvertableType(attr.getType())) {
-                attr.executeSetter(o, child.getTextValue());
-            } else if (isList(attr.getType())) {
-                recurseElementAndPopulateList(child, attr.getName(), o);
-            } else if (isMap(attr.getType())) {
-                recurseElementAndPopulateMap(child, attr.getName(), o);
+            if (o instanceof MapModel) {
+                ((MapModel) o).put(k, child.getTextValue());
             } else {
-                Object fv = attr.getType().newInstance();
-                recurseElementAndPopulateModel(child, fv);
+                AttributeDescriptor attr = attrs.get(k);
+                if (attr == null) {
+                    throw new RuntimeException("Unable to find field " + k + " in " + o.getClass().getName());
+                }
+                if (isConvertableType(attr.getType())) {
+                    attr.executeSetter(o, child.getTextValue());
+                } else if (isList(attr.getType())) {
+                    recurseElementAndPopulateList(child, attr.getName(), o);
+                } else if (isMap(attr.getType())) {
+                    recurseElementAndPopulateMap(child, attr.getName(), o);
+                } else {
+                    Object fv = attr.getType().newInstance();
+                    recurseElementAndPopulateModel(child, fv);
+                }
             }
         }
     }

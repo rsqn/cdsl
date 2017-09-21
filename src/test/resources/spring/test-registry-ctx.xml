@@ -21,6 +21,10 @@
 
     </bean>
 
+    <bean id="static-test-import" class="tech.rsqn.cdsl.dsl.StaticDslTestSupport" scope="singleton">
+
+    </bean>
+
     <task:annotation-driven executor="globalExecutor" scheduler="globalScheduler"/>
     <task:executor id="globalExecutor" pool-size="5"/>
     <task:scheduler id="globalScheduler" pool-size="10"/>

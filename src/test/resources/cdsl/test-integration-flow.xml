@@ -2,7 +2,7 @@
 
 <cdsl>
     <flow id="test-flow-a" defaultStep="init" errorStep="error">
-        <flowStep id="init">
+        <step id="init">
             <sayHello name="fred"/>
             <dslWithComplexModel aModelProperty="testProperty">
                 <modelChild>
@@ -13,133 +13,149 @@
                     </aList>
                 </modelChild>
             </dslWithComplexModel>
-        </flowStep>
+        </step>
 
     </flow>
 
     <flow id="shouldRunHelloWorldAndEndRoute" defaultStep="init" errorStep="error">
-        <flowStep id="init">
+        <step id="init">
             <setState val="Alive"/>
             <sayHello name="fred"/>
             <setVar name="myVar" val="myVal"/>
             <routeTo target="end"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
             </finally>
-        </flowStep>
+        </step>
     </flow>
 
     <flow id="shouldRaiseExceptionFlow" defaultStep="init" errorStep="error">
 
-        <flowStep id="init">
+        <step id="init">
             <setState val="Alive"/>
             <raiseException/>
-        </flowStep>
+        </step>
 
-        <flowStep id="error">
+        <step id="error">
             <setVar name="errorRaised" val="yesItWas"/>
             <finally>
                 <endRoute/>
                 <setState val="Error"/>
             </finally>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
             </finally>
-        </flowStep>
+        </step>
     </flow>
 
 
     <flow id="shouldRouteThroughAThenBThenAwaitAtC" defaultStep="init" errorStep="error">
-        <flowStep id="init">
+        <step id="init">
             <setState val="Alive"/>
             <routeTo target="a"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="a">
+        <step id="a">
             <routeTo target="b"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="b">
+        <step id="b">
             <await at="c"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="c" >
+        <step id="c" >
             <whiteList onFailure="Reject" names="message, other" />
             <routeTo target="end"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
             </finally>
-        </flowStep>
+        </step>
     </flow>
 
     <flow id="shouldAwaitAtB" defaultStep="init" errorStep="error">
-        <flowStep id="init">
+        <step id="init">
             <setState val="Alive"/>
             <routeTo target="a"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="a">
+        <step id="a">
             <await at="b"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="b">
+        <step id="b">
             <whiteList names="message" onFailure="Route" to="end"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
             </finally>
-        </flowStep>
+        </step>
     </flow>
 
 
     <flow id="shouldProcessInputModelA" defaultStep="init" errorStep="error">
-        <flowStep id="init">
+        <step id="init">
             <setState val="Alive"/>
             <routeTo target="reverseInputModel"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="reverseInputModel">
+        <step id="reverseInputModel">
             <reverseCustomInput outVar="myChosenVar"/>
             <routeTo target="end"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
                 <!--<outCome varName="myChosenVar"/>-->
             </finally>
-        </flowStep>
+        </step>
     </flow>
 
 
     <flow id="shouldRunInjected" defaultStep="init" >
-        <flowStep id="init">
+        <step id="init">
             <injected name="injectedOne"/>
             <routeTo target="end"/>
-        </flowStep>
+        </step>
 
-        <flowStep id="end">
+        <step id="end">
             <endRoute/>
             <finally>
                 <setState val="End"/>
             </finally>
-        </flowStep>
+        </step>
+    </flow>
+
+    <flow id="mapModelFlow" defaultStep="init" >
+        <step id="init">
+            <static-test-support attrOne="attrOneValue">
+                    <elemOne>elemOneValue</elemOne>
+            </static-test-support>
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
     </flow>
 
 </cdsl>

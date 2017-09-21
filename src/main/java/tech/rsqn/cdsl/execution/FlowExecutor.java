@@ -199,6 +199,9 @@ public class FlowExecutor {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
                         nextStep = flow.fetchStep(result.getNextRoute());
+                        if ( nextStep == null) {
+                            throw new CdslException("Invalid Route " + result.getNextRoute());
+                        }
                     } else if (CdslOutputEvent.Action.Await == result.getAction()) {
                         logger.debug(logPrefix + " awaiting at " + result.getNextRoute());
                         context.setState(CdslContext.State.Await);
@@ -209,6 +212,7 @@ public class FlowExecutor {
                         logger.debug(logPrefix + " rejected" + result.getNextRoute());
                     }
                     output = result;
+
 
                 } catch (Exception ex) {
                     logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(), ex);

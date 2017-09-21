@@ -137,6 +137,7 @@ public class DslInitialisationHelper implements ApplicationContextAware {
             }
             return (Dsl) applicationContext.getBean(meta.getName());
         }
+
         return (Dsl) applicationContext.getBean(meta.getCls());
     }
 

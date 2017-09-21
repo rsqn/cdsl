@@ -12,35 +12,19 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@CdslDef("test-support")
+@CdslDef("static-test-support")
 @CdslModel(MapModel.class)
-public class DslTestSupport extends DslSupport<MapModel,Serializable> {
-    private List<String> behaviours = new ArrayList<>();
-    private Dsl c;
-
-    public DslTestSupport withGenericCdslException() {
-        behaviours.add("raise-exception");
-        return this;
-    }
-
-    public DslTestSupport withDsl(Dsl c) {
-        this.c = c;
-        return this;
-    }
+public class StaticDslTestSupport extends DslSupport<MapModel, Serializable> {
+    public static Dsl staticDsl;
 
     public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, MapModel model, CdslInputEvent input) throws CdslException {
-        if ( c != null ) {
+        if (staticDsl != null) {
             try {
-                return c.execute(runtime, ctx, model, input);
+                return staticDsl.execute(runtime, ctx, model, input);
             } catch (Exception e) {
-               throw new CdslException(e);
+                throw new CdslException(e);
             }
         }
-
-        if ( behaviours.contains("raise-exception")) {
-            throw new CdslException("raise-exception");
-        }
-
         return null;
     }
 }

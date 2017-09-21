@@ -6,18 +6,25 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import tech.rsqn.cdsl.concurrency.Lock;
 import tech.rsqn.cdsl.concurrency.LockProviderUnitTestSupport;
 import tech.rsqn.cdsl.context.CdslContext;
 import tech.rsqn.cdsl.context.CdslContextAuditorUnitTestSupport;
 import tech.rsqn.cdsl.context.CdslContextRepositoryUnitTestSupport;
+import tech.rsqn.cdsl.context.CdslRuntime;
+import tech.rsqn.cdsl.dsl.Dsl;
+import tech.rsqn.cdsl.dsl.DslTestSupport;
 import tech.rsqn.cdsl.dsl.MapModel;
+import tech.rsqn.cdsl.dsl.StaticDslTestSupport;
 import tech.rsqn.cdsl.exceptions.CdslException;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Test
 @ContextConfiguration(locations = {"classpath:/spring/test-registry-integration-ctx.xml"})
@@ -296,28 +303,83 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void shouldRetryWithinBoundariesOnLockRejection() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRouteThroughAThenBThenAwaitAtC");
+        Assert.assertEquals(contextRepository.getContexts().size(), 0);
 
+        AtomicReference<String> resource = new AtomicReference<>();
+        lockProvider.onLockCallback((Lock lock)-> {
+            resource.set(lock.getGrantedResource());
+        });
+
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Lock lockA = lockProvider.obtain("test", resource.get(),1000,1,1000);
+        Assert.assertNotNull(lockA);
+
+        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andContextId(output.getContextId()));
+        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
     }
 
 
     @Test
     public void shouldRejectIfLockRetriesExceeded() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("shouldRouteThroughAThenBThenAwaitAtC");
+        Assert.assertEquals(contextRepository.getContexts().size(), 0);
 
+        AtomicReference<String> resource = new AtomicReference<>();
+        lockProvider.onLockCallback((Lock lock)-> {
+            resource.set(lock.getGrantedResource());
+        });
+
+        CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Lock lockA = lockProvider.obtain("test", resource.get(),10000,1,1000);
+        Assert.assertNotNull(lockA);
+
+        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andContextId(output.getContextId()));
+
+        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
     }
 
 
-
-
-    @Test
+    @Test(expectedExceptions = CdslException.class)
+    //todo- perform this test to a DslModelBuilder only test
     public void shouldPopulateMapModel() throws Exception {
-        Assert.assertTrue(false);
+        Flow flow = flowRegistry.getFlow("mapModelFlow");
+
+        Assert.assertEquals(contextRepository.getContexts().size(), 0);
+        AtomicReference<String> attrResource = new AtomicReference<>();
+        AtomicReference<String> elemResource = new AtomicReference<>();
+
+        StaticDslTestSupport.staticDsl = new Dsl<MapModel,Serializable>() {
+            @Override
+            public CdslOutputEvent execute(CdslRuntime runtime, CdslContext ctx, MapModel model, CdslInputEvent<Serializable> input) throws CdslException {
+
+                attrResource.set(model.getMap().get("attrOne"));
+                elemResource.set(model.getMap().get("elemOne"));
+
+                return null;
+            }
+        };
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message"));
+
+        Assert.assertEquals("attrOneValue",attrResource.get());
+        Assert.assertEquals("elemOneValue",elemResource.get());
     }
 
-    @Test
-    public void shouldThrowErrorWhenRoutingToInvalidId() throws Exception {
-        Assert.assertTrue(false);
+    @Test(expectedExceptions = CdslException.class)
+    public void shouldThrowErrorWhenRoutingToInvalidTarget() throws Exception {
+
+        Flow flow = flowRegistry.getFlow("shouldRunInjected");
+        MapModel inputModel = new MapModel();
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            return new CdslOutputEvent().withRoute("wrong-turn");
+        });
+
+        executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+
     }
 
 }
