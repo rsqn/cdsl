@@ -72,7 +72,7 @@
         </step>
 
         <step id="c" >
-            <whiteList onFailure="Reject" names="message, other" />
+            <!--whiteList onFailure="Reject" names="message, other" /-->
             <routeTo target="end"/>
         </step>
 

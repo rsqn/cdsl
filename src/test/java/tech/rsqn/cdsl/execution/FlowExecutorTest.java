@@ -68,7 +68,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertEquals(context.getCurrentStep(), "end");
 
         System.out.println(testAuditor);
-        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.init.routeTo"));
+        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunHelloWorldAndEndRoute.init.routeTo"));
         // assert that the auditor passed through ABC
     }
 
@@ -77,8 +77,8 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));
 
-        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.init.sayHello"));
-        Assert.assertTrue(testAuditor.didExecute("shouldRunHelloWorldAndEndRoute.end.endRoute"));
+        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunHelloWorldAndEndRoute.init.sayHello"));
+        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunHelloWorldAndEndRoute.end.endRoute"));
     }
 
 
@@ -145,9 +145,9 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertEquals(contextRepository.getContexts().size(), 0);
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));
 
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.a"));
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.b"));
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.a"));
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.b"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
 
         System.out.println(output);
 
@@ -157,7 +157,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertEquals(context.getState(), CdslContext.State.Await);
     }
 
-    @Test
+    @Test()
     public void shouldContinueFromAwaitBlock() throws Exception {
         Flow flow = flowRegistry.getFlow("shouldRouteThroughAThenBThenAwaitAtC");
         Assert.assertEquals(contextRepository.getContexts().size(), 0);
@@ -165,10 +165,12 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
         CdslContext context = contextRepository.getContext(output.getContextId());
 
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
         executor.execute(flow, new CdslInputEvent().with("test", "message").andContextId(output.getContextId()));
 
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        context = contextRepository.getContext(output.getContextId());
+
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
         Assert.assertEquals(context.getCurrentStep(), "end");
         Assert.assertEquals(context.getState(), CdslContext.State.End);
 
@@ -181,12 +183,12 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "messageOne"));
 
 
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
 
         executor.execute(flow, new CdslInputEvent().with("test", "messageFail").andContextId(output.getContextId()));
         CdslContext context = contextRepository.getContext(output.getContextId());
 
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
         Assert.assertEquals(context.getCurrentStep(), "c");
         Assert.assertEquals(context.getState(), CdslContext.State.Await);
     }
@@ -264,7 +266,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
         executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
 
-        Assert.assertTrue(testAuditor.didTransition("setVar/testChange"));
+        Assert.assertTrue(testAuditor.didLogEvent("setVar/testChange"));
     }
 
     @Test
@@ -278,7 +280,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
         executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
 
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRunInjected.end"));
+        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunInjected.end"));
 
     }
 
@@ -294,7 +296,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
         CdslOutputEvent out = executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
 
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRunInjected.end"));
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRunInjected.end"));
 
         executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel).andContextId(out.getContextId()));
 
@@ -315,9 +317,9 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Lock lockA = lockProvider.obtain("test", resource.get(),1000,1,1000);
         Assert.assertNotNull(lockA);
 
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
         executor.execute(flow, new CdslInputEvent().with("test", "message").andContextId(output.getContextId()));
-        Assert.assertTrue(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
     }
 
 
@@ -335,10 +337,10 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Lock lockA = lockProvider.obtain("test", resource.get(),10000,1,1000);
         Assert.assertNotNull(lockA);
 
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
         executor.execute(flow, new CdslInputEvent().with("test", "message").andContextId(output.getContextId()));
 
-        Assert.assertFalse(testAuditor.didTransition("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
+        Assert.assertFalse(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
     }
 
 

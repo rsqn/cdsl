@@ -21,6 +21,7 @@ public abstract class DslSupport<T,MT extends Serializable> implements Dsl<T,MT>
 
 
     public  final CdslOutputEvent execute(CdslRuntime runtime, CdslContext ctx, T model, CdslInputEvent<MT> input) throws CdslException {
+        ctx.setRuntime(runtime);
         return execSupport(runtime,ctx, model, input);
     }
 

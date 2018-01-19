@@ -11,14 +11,10 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
 
     private List<String> events = new ArrayList<>();
 
-    public boolean didTransition(String s) {
+    public boolean didLogEvent(String s) {
         return events.contains(s);
     }
-
-    public boolean didExecute(String s) {
-        return events.contains(s);
-    }
-
+    
     @Override
     public String toString() {
         String s = "CdslContextAuditorUnitTestSupport.events:";

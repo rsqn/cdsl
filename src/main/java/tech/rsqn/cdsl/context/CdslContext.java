@@ -67,7 +67,14 @@ public class CdslContext {
     }
 
     public <T extends Serializable> void putVar(String k, T v) {
-        runtime.getAuditor().setVar(this,k,v.toString(),vars.get(k));
+        if ( runtime == null ) {
+            throw new java.lang.RuntimeException("holy uck");
+        }
+        runtime
+        .getAuditor()
+        .setVar(this,k,
+        v != null ? v.toString() : "null",
+        vars.get(k));
         vars.put(k, v);
     }
 

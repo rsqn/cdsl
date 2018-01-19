@@ -40,7 +40,6 @@ public class DslInterfaceTest {
         ctx = new CdslContext();
         runtime = new CdslRuntime();
         auditor = new CdslContextAuditorUnitTestSupport();
-
         runtime.setAuditor(auditor);
         supp.setAuditor(auditor);
     }
@@ -66,7 +65,12 @@ public class DslInterfaceTest {
     public void shouldModifyContext() throws Exception {
         Assert.assertNull(ctx.fetchVar("myVar"));
 
+        Assert.assertNotNull(runtime.getAuditor());
+        
         supp.withDsl((runtime, ctx, model, input) -> {
+            System.out.println("XXX Runtime is " + runtime);
+            System.err.println("XXX Runtim.auditor is " + runtime.getAuditor());
+
             ctx.putVar("myVar", "wasSet");
             return null;
         });
