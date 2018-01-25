@@ -86,4 +86,8 @@ public class CdslContextAuditorUnitTestSupport implements CdslContextAuditor {
         ev.setTo(ctx.getCurrentStep());
         System.out.println(ev);
     }
+    
+    public void clear() {
+      events.clear();
+    }
 }

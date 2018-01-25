@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.*;
 import org.testng.annotations.Test;
 import tech.rsqn.cdsl.concurrency.Lock;
 import tech.rsqn.cdsl.concurrency.LockProviderUnitTestSupport;
@@ -51,8 +51,15 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @BeforeMethod
     public void setUp() throws Exception {
+        testAuditor.clear();
         contextRepository.getContexts().clear();
     }
+    
+    @AfterMethod
+    public void logAuditEvents() throws Exception {
+        System.out.println(testAuditor);
+    }
+
 
     @Test
     public void shouldExecuteInitStepIfNoStatePresent() throws Exception {
@@ -130,7 +137,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void shouldRouteToErrorHandlersOnException() throws Exception {
-        Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
+        Flow flow = flowRegistry.getFlow("shouldRaiseExceptionFlow");
         Assert.assertEquals(contextRepository.getContexts().size(), 0);
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));
         CdslContext context = contextRepository.getContext(output.getContextId());
@@ -189,8 +196,8 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         CdslContext context = contextRepository.getContext(output.getContextId());
 
         Assert.assertTrue(testAuditor.didLogEvent("transition/shouldRouteThroughAThenBThenAwaitAtC.c"));
-        Assert.assertEquals(context.getCurrentStep(), "c");
-        Assert.assertEquals(context.getState(), CdslContext.State.Await);
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
     }
 
     @Test
@@ -280,7 +287,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
         executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
 
-        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunInjected.end"));
+        Assert.assertTrue(testAuditor.didLogEvent("execute/shouldRunInjected.end.setState"));
 
     }
 
@@ -344,7 +351,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     }
 
 
-    @Test(expectedExceptions = CdslException.class)
+    @Test
     //todo- perform this test to a DslModelBuilder only test
     public void shouldPopulateMapModel() throws Exception {
         Flow flow = flowRegistry.getFlow("mapModelFlow");
