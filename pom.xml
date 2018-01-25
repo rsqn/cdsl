@@ -22,7 +22,7 @@
     <scm>
         <connection>scm:git:git@github.com:rsqn/cdsl.git</connection>
         <developerConnection>scm:git:git@github.com:rsqn/cdsl.git</developerConnection>
-        <url>https://github.com/mandrewes/cdsl</url>
+        <url>https://github.com/rsqn/cdsl</url>
         <tag>HEAD</tag>
     </scm>
 
