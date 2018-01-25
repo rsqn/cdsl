@@ -1,57 +1,14 @@
 package tech.rsqn.cdsl.context;
 
 
+/**
+ * Repository interface for contexts - locking should happen outside this repository
+ */
+public interface CdslContextRepository {
 
-import org.springframework.beans.BeanUtils;
-import tech.rsqn.cdsl.exceptions.CdslException;
+    CdslContext getContext(String contextId);
 
-import java.util.HashMap;
-import java.util.Map;
+    CdslContext getContext(String transactionId, String contextId);
 
-public class CsdlDynamoContextRepository implements CdslContextRepository {
-
-  
-    private Map<String, CdslContext> contexts = new HashMap<>();
-
-    private Map<String, String> openTransactions = new HashMap<>();
-
-    public Map<String, CdslContext> getContexts() {
-        return contexts;
-    }
-
-    @Override
-    public CdslContext getContext(String contextId) {
-        return contexts.get(contextId);
-    }
-
-    @Override
-    public CdslContext getContext(String transactionId, String contextId) {
-        CdslContext context = contexts.get(contextId);
-
-        if (context != null) {
-            CdslContext shallowCopy = new CdslContext();
-            BeanUtils.copyProperties(context, shallowCopy);
-            openTransactions.put(contextId, transactionId);
-            return shallowCopy;
-        } else {
-            return null;
-        }
-
-    }
-
-    public void saveContext(String transactionId, CdslContext context) {
-        String openTxn = openTransactions.get(context.getId());
-        if (openTxn != null) {
-            if (openTxn.equals(transactionId)) {
-                contexts.put(context.getId(), context);
-                openTransactions.remove(context.getId());
-            } else {
-                throw new CdslException("mismatched transaction id " + transactionId + " vs open txn " + openTxn);
-            }
-        } else {
-            contexts.put(context.getId(), context);
-        }
-    }
-}
-
+    void saveContext(String transactionId, CdslContext contextId);
 }
