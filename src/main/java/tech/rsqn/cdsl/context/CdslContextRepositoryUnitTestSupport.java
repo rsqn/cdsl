@@ -49,4 +49,12 @@ public class CdslContextRepositoryUnitTestSupport implements CdslContextReposito
             contexts.put(context.getId(), context);
         }
     }
+    
+    public int deleteContext(String contextId) {
+        if ( contexts.containsKey(contextId)) {
+            contexts.remove(contextId);
+            return 1;
+        } 
+        return 0;
+    }
 }

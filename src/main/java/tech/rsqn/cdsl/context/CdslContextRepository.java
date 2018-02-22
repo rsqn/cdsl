@@ -10,5 +10,7 @@ public interface CdslContextRepository {
 
     CdslContext getContext(String transactionId, String contextId);
 
-    void saveContext(String transactionId, CdslContext contextId);
+    void saveContext(String transactionId, CdslContext context);
+    
+    int deleteContext(String contextId);
 }
