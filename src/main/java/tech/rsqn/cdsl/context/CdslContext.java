@@ -13,8 +13,8 @@ public class CdslContext {
     private State state;
     private String currentFlow;
     private String currentStep;
-    private Map<String, Object> transientVars;
-    private Map<String, Serializable> vars;
+    private transient Map<String, Object> transientVars;
+    private Map<String, String> vars;
 
     public CdslContext() {
         vars = new HashMap<>();
@@ -58,17 +58,17 @@ public class CdslContext {
         this.currentStep = currentStep;
     }
 
-    public Map<String, Serializable> getVars() {
+    public Map<String, String> getVars() {
         return vars;
     }
 
-    public void setVars(Map<String, Serializable> vars) {
+    public void setVars(Map<String, String> vars) {
         this.vars = vars;
     }
 
-    public <T extends Serializable> void putVar(String k, T v) {
+    public <T extends String> void putVar(String k, T v) {
         if ( runtime == null ) {
-            throw new java.lang.RuntimeException("holy uck");
+            throw new java.lang.RuntimeException("CdslRuntime not present");
         }
         runtime
         .getAuditor()
