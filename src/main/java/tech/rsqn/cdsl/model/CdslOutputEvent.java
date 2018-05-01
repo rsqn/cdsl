@@ -73,4 +73,15 @@ public class CdslOutputEvent<T extends Serializable> {
     public void setMeta(String meta) {
         this.meta = meta;
     }
+
+    @Override
+    public String toString() {
+        return "CdslOutputEvent{" +
+                "action=" + action +
+                ", contextState=" + contextState +
+                ", nextRoute='" + nextRoute + '\'' +
+                ", meta='" + meta + '\'' +
+                ", contextId='" + contextId + '\'' +
+                '}';
+    }
 }

@@ -55,4 +55,14 @@ public class CdslInputEvent<T extends Serializable> {
     public void setModel(T model) {
         this.model = model;
     }
+
+    @Override
+    public String toString() {
+        return "CdslInputEvent{" +
+                "contextId='" + contextId + '\'' +
+                ", name='" + name + '\'' +
+                ", source='" + source + '\'' +
+                ", model=" + model +
+                '}';
+    }
 }
