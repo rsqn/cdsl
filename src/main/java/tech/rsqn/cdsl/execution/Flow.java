@@ -60,4 +60,14 @@ public class Flow {
     public void setErrorStep(String errorStep) {
         this.errorStep = errorStep;
     }
+
+    @Override
+    public String toString() {
+        return "Flow{" +
+                "id='" + id + '\'' +
+                ", defaultStep='" + defaultStep + '\'' +
+                ", errorStep='" + errorStep + '\'' +
+                ", steps=" + steps +
+                '}';
+    }
 }
