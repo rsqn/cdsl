@@ -15,13 +15,17 @@ import tech.rsqn.cdsl.context.CdslRuntime;
 import tech.rsqn.cdsl.dsl.Dsl;
 import tech.rsqn.cdsl.dsl.DslMetadata;
 import tech.rsqn.cdsl.exceptions.CdslException;
+import tech.rsqn.cdsl.model.CdslFlowOutputEvent;
 import tech.rsqn.cdsl.model.CdslInputEvent;
+import tech.rsqn.cdsl.model.CdslOutputValue;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
 import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 import tech.rsqn.useful.things.identifiers.UIDHelper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FlowExecutor {
     private static final Logger logger = LoggerFactory.getLogger(FlowExecutor.class);
@@ -115,7 +119,7 @@ public class FlowExecutor {
         return null;
     }
 
-    public CdslOutputEvent execute(Flow flow, CdslInputEvent inputEvent) {
+    public CdslFlowOutputEvent execute(Flow flow, CdslInputEvent inputEvent) {
         if (flow == null) {
             throw new RuntimeException("Flow must be provided");
         }
@@ -155,7 +159,9 @@ public class FlowExecutor {
             // get the step
             FlowStep step = null;
             FlowStep nextStep = flow.fetchStep(context.getCurrentStep());
-            CdslOutputEvent output = null;
+            CdslFlowOutputEvent outputEvent = null;
+
+            Map<String,CdslOutputValue> outputValues = new HashMap<>();
 
             while (nextStep != null) {
                 context.setCurrentStep(nextStep.getId());
@@ -174,14 +180,15 @@ public class FlowExecutor {
                     if (finalOutput != null) {
                         logger.debug("Result of  " + step.getId() + " provided by final group DSL group");
                         result = finalOutput;
+                        // final output overrides general output for results
                     } else if (generalOutput != null) {
                         logger.debug("Result of  " + step.getId() + " provided by general DSL group category");
                         result = generalOutput;
                     } else {
                         logger.debug("Result of  " + step.getId() + " was null");
                         result = null;
-
                     }
+
                     // execute post step tasks
                     for (PostStepTask postStepTask : runtime.getPostStepTasks()) {
                         try {
@@ -194,7 +201,7 @@ public class FlowExecutor {
                     }
                     runtime.getPostStepTasks().clear();
 
-                    //todo - clean up where stater is set
+                    //todo - clean up where state is set
                     if (CdslOutputEvent.Action.Route == result.getAction()) {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
@@ -211,7 +218,7 @@ public class FlowExecutor {
                     } else if (CdslOutputEvent.Action.Reject == result.getAction()) {
                         logger.debug(logPrefix + " rejected" + result.getNextRoute());
                     }
-                    output = result;
+                    outputEvent = new CdslFlowOutputEvent().with(result);
 
 
                 } catch (Exception ex) {
@@ -245,16 +252,20 @@ public class FlowExecutor {
             runtime.getPostCommitTasks().clear();
 
             // output something
-            if (output == null) {
-                output = new CdslOutputEvent();
+            if (outputEvent == null) {
+                outputEvent = new CdslFlowOutputEvent();
             }
 
-            output.setContextId(context.getId());
-            output.setContextState(context.getState());
+            outputEvent.setContextId(context.getId());
+            outputEvent.setContextState(context.getState());
+            // perhaps we want to honour the order in which conflicting keys were set here.
+            outputEvent.getOutputValues().putAll(outputValues);
+
+            outputEvent.setOutputValues(runtime.getOutputValueMap());
 
             runtime = null;
 
-            return output;
+            return outputEvent;
 
         } catch (LockRejectedException lockRejected) {
             logger.warn("Lock Rejected ", lockRejected);

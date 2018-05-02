@@ -17,8 +17,10 @@ import tech.rsqn.cdsl.dsl.DslTestSupport;
 import tech.rsqn.cdsl.dsl.MapModel;
 import tech.rsqn.cdsl.dsl.StaticDslTestSupport;
 import tech.rsqn.cdsl.exceptions.CdslException;
+import tech.rsqn.cdsl.model.CdslFlowOutputEvent;
 import tech.rsqn.cdsl.model.CdslInputEvent;
 import tech.rsqn.cdsl.model.CdslOutputEvent;
+import tech.rsqn.cdsl.model.CdslOutputValue;
 import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 
@@ -388,6 +390,38 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         });
 
         executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(inputModel));
+
+    }
+
+    @Test
+    public void shouldPassOuputValues() throws Exception {
+        Flow flow = flowRegistry.getFlow("shouldPassOutputValues");
+        Assert.assertEquals(contextRepository.getContexts().size(), 0);
+
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            runtime.emit(new CdslOutputValue().withName("one").andValue("one"));
+            return null;
+        });
+
+        dslHelper.inject("injectedTwo", (runtime, ctx, model, input)-> {
+            runtime.emit(new CdslOutputValue().withName("two").andValue("two"));
+            return null;
+        });
+
+        CdslFlowOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(""));
+
+        Assert.assertEquals(output.getOutputValues().size(),2);
+
+        CdslOutputValue vOne = output.getOutputValue("one");
+
+        Assert.assertNotNull(vOne);
+
+
+        CdslOutputValue vTwo = output.getOutputValue("two");
+        Assert.assertNotNull(vTwo);
+        Assert.assertEquals(vTwo.getVal(),"two");
+
 
     }
 

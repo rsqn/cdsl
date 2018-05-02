@@ -33,6 +33,27 @@
         </step>
     </flow>
 
+
+
+    <flow id="shouldPassOutputValues" defaultStep="init" errorStep="error">
+        <step id="init">
+            <injected name="injectedOne"/>
+
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <injected name="injectedTwo"/>
+
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
+    </flow>
+
+
+
     <flow id="shouldRaiseExceptionFlow" defaultStep="init" errorStep="error">
 
         <step id="init">

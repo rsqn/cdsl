@@ -2,15 +2,16 @@ package tech.rsqn.cdsl.model;
 
 import tech.rsqn.cdsl.context.CdslContext;
 
-import java.io.Serializable;
-
-public class CdslOutputEvent<T extends Serializable> {
+public class CdslOutputEvent {
     public enum Action {Route, Await, Reject, End, Continue}
     private Action action;
     private CdslContext.State contextState;
     private String nextRoute;
     private String meta;
     private String contextId;
+
+    public CdslOutputEvent() {
+    }
 
     public CdslOutputEvent withAction(Action a) {
         this.action = a;
