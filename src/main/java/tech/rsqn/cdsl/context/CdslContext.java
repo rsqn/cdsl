@@ -62,6 +62,10 @@ public class CdslContext {
         return vars;
     }
 
+    public String getVars(String n) {
+        return vars.get(n);
+    }
+
     public void setVars(Map<String, String> vars) {
         this.vars = vars;
     }
