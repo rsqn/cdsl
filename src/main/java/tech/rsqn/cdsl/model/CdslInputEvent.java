@@ -6,6 +6,7 @@ public class CdslInputEvent<T extends Serializable> {
     private String contextId;
     private String name;
     private String source;
+    private String requestedStep;
     private T model;
 
     public CdslInputEvent with(String source, String name) {
@@ -16,6 +17,11 @@ public class CdslInputEvent<T extends Serializable> {
 
     public CdslInputEvent andContextId(String contextId) {
         this.contextId = contextId;
+        return this;
+    }
+
+    public CdslInputEvent andStep(String requestedStep) {
+        this.requestedStep = requestedStep;
         return this;
     }
 
@@ -56,12 +62,21 @@ public class CdslInputEvent<T extends Serializable> {
         this.model = model;
     }
 
+    public String getRequestedStep() {
+        return requestedStep;
+    }
+
+    public void setRequestedStep(String requestedStep) {
+        this.requestedStep = requestedStep;
+    }
+
     @Override
     public String toString() {
         return "CdslInputEvent{" +
                 "contextId='" + contextId + '\'' +
                 ", name='" + name + '\'' +
                 ", source='" + source + '\'' +
+                ", requestedStep='" + requestedStep + '\'' +
                 ", model=" + model +
                 '}';
     }

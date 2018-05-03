@@ -161,6 +161,13 @@ public class FlowExecutor {
             FlowStep nextStep = flow.fetchStep(context.getCurrentStep());
             CdslFlowOutputEvent outputEvent = null;
 
+            if ( StringUtils.isNotEmpty(inputEvent.getRequestedStep())) {
+                logger.debug(context.getId() + " inputEvent is requesting step " + inputEvent.getRequestedStep());
+                nextStep = flow.fetchStep(inputEvent.getRequestedStep());
+                // todo - check guard conditions
+                context.setCurrentStep(inputEvent.getRequestedStep());
+            }
+
             Map<String,CdslOutputValue> outputValues = new HashMap<>();
 
             while (nextStep != null) {
