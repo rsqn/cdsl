@@ -69,7 +69,7 @@
         <dependency>
             <groupId>tech.rsqn.reflection-helpers</groupId>
             <artifactId>reflection-helpers</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.2</version>
         </dependency>
 
         <!--Compile Dependencies-->
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>tech.rsqn.useful-things</groupId>
             <artifactId>simple-utilities</artifactId>
-            <version>1.0.30</version>
+            <version>1.0.38</version>
             <scope>compile</scope>
         </dependency>
 
