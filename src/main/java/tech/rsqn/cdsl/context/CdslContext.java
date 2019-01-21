@@ -1,10 +1,14 @@
 package tech.rsqn.cdsl.context;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CdslContext {
+    public static final int MAX_TRANSITIONS_HISTORY = 1000;
+
     public enum State {Undefined, Alive, Await, End, Error}
 
     private transient CdslRuntime runtime;
@@ -15,11 +19,21 @@ public class CdslContext {
     private String currentStep;
     private transient Map<String, Object> transientVars;
     private Map<String, String> vars;
+    private List<String> transitions;
+
 
     public CdslContext() {
         vars = new HashMap<>();
         transientVars = new HashMap<>();
         state = State.Undefined;
+        transitions = new ArrayList<>();
+    }
+
+    public void pushTransition(String s) {
+        transitions.add(s);
+        if ( transitions.size() > MAX_TRANSITIONS_HISTORY) {
+            transitions.remove(0);
+        }
     }
 
     public void setRuntime(CdslRuntime runtime) {
@@ -62,7 +76,7 @@ public class CdslContext {
         return vars;
     }
 
-    public String getVars(String n) {
+    public String getVar(String n) {
         return vars.get(n);
     }
 

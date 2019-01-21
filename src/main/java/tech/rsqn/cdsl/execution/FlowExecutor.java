@@ -161,17 +161,21 @@ public class FlowExecutor {
             FlowStep nextStep = flow.fetchStep(context.getCurrentStep());
             CdslFlowOutputEvent outputEvent = null;
 
-            if ( StringUtils.isNotEmpty(inputEvent.getRequestedStep())) {
+            if (StringUtils.isNotEmpty(inputEvent.getRequestedStep())) {
                 logger.debug(context.getId() + " inputEvent is requesting step " + inputEvent.getRequestedStep());
                 nextStep = flow.fetchStep(inputEvent.getRequestedStep());
+                if (nextStep == null) {
+                    logger.warn("Requested step " + inputEvent.getRequestedStep() + " was not found");
+                }
                 // todo - check guard conditions
                 context.setCurrentStep(inputEvent.getRequestedStep());
             }
 
-            Map<String,CdslOutputValue> outputValues = new HashMap<>();
+            Map<String, CdslOutputValue> outputValues = new HashMap<>();
 
             while (nextStep != null) {
                 context.setCurrentStep(nextStep.getId());
+                context.pushTransition(flow.getId() + "/" + nextStep.getId());
                 runtime.getAuditor().transition(context, flow.getId(), nextStep.getId());
 
                 step = nextStep;
@@ -213,7 +217,7 @@ public class FlowExecutor {
                         logger.debug(logPrefix + " routing to " + result.getNextRoute());
                         context.setCurrentStep(result.getNextRoute());
                         nextStep = flow.fetchStep(result.getNextRoute());
-                        if ( nextStep == null) {
+                        if (nextStep == null) {
                             throw new CdslException("Invalid Route " + result.getNextRoute());
                         }
                     } else if (CdslOutputEvent.Action.Await == result.getAction()) {
