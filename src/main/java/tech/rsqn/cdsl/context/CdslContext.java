@@ -108,7 +108,13 @@ public class CdslContext {
         return (T) transientVars.get(k);
     }
 
+    public List<String> getTransitions() {
+        return transitions;
+    }
 
+    public void setTransitions(List<String> transitions) {
+        this.transitions = transitions;
+    }
 
     /*
     public void setVar(String k, Number v) {
