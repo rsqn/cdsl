@@ -24,9 +24,17 @@ public class DslInitialisationHelper implements ApplicationContextAware {
 
     private Map<String,Dsl> injectedDsl;
 
+    private static Map<String,Dsl> staticInjections = new HashMap<>(); // this is useful for unit tests
+
+
     public DslInitialisationHelper() {
         injectedDsl = new HashMap<>();
         modelBuilder = new DslModelBuilder();
+        injectedDsl.putAll(staticInjections);
+    }
+
+    public static void injectStatic(String name, Dsl dsl) {
+        staticInjections.put(name,dsl);
     }
 
     @Override
