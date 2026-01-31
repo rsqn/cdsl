@@ -60,6 +60,9 @@ public class DslInitialisationHelper implements ApplicationContextAware {
         Dsl dsl = null;
         DslMetadata.ResolutionStrategy resolutionStrategy = null;
 
+        if (element == null) {
+            throw new RuntimeException("Element cannot be null");
+        }
 
         dsl = injectedDsl.get(element.getName());
         if (dsl != null) {
@@ -78,21 +81,23 @@ public class DslInitialisationHelper implements ApplicationContextAware {
         if (dsl != null) {
             resolutionStrategy = DslMetadata.ResolutionStrategy.ByName;
         } else {
-            Map<String, Object> beans = applicationContext.getBeansWithAnnotation(CdslDef.class);
+            if (applicationContext != null) {
+                Map<String, Object> beans = applicationContext.getBeansWithAnnotation(CdslDef.class);
 
-            for (Object o : beans.values()) {
-                if (!(o instanceof Dsl)) {
-                    throw new RuntimeException("Bean found with CdslDef annotation that does not implement Dsl " + o.getClass());
-                }
+                for (Object o : beans.values()) {
+                    if (!(o instanceof Dsl)) {
+                        throw new RuntimeException("Bean found with CdslDef annotation that does not implement Dsl " + o.getClass());
+                    }
 
-                dsl = (Dsl) o;
-                CdslDef def = dsl.getClass().getAnnotation(CdslDef.class);
-                if (element.getName().equals(def.value())) {
-                    logger.info("DSL (" + element.getName() + ") resolved to an annotated class " + dsl.getClass().getName());
-                    resolutionStrategy = DslMetadata.ResolutionStrategy.ByType;
-                    break;
-                } else {
-                    dsl = null;
+                    dsl = (Dsl) o;
+                    CdslDef def = dsl.getClass().getAnnotation(CdslDef.class);
+                    if (element.getName().equals(def.value())) {
+                        logger.info("DSL (" + element.getName() + ") resolved to an annotated class " + dsl.getClass().getName());
+                        resolutionStrategy = DslMetadata.ResolutionStrategy.ByType;
+                        break;
+                    } else {
+                        dsl = null;
+                    }
                 }
             }
         }

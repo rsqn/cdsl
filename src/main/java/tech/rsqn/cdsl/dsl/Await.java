@@ -17,6 +17,12 @@ import java.io.Serializable;
 public class Await extends DslSupport<AwaitModel,Serializable> {
     @Override
     public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, AwaitModel model, CdslInputEvent input) throws CdslException {
+        if (model == null) {
+            throw new CdslException("Await model cannot be null");
+        }
+        if (model.getAt() == null) {
+            throw new CdslException("Await 'at' property cannot be null");
+        }
         return new CdslOutputEvent().awaitInputAt(model.getAt());
     }
 }

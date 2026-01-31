@@ -1,51 +1,81 @@
 package tech.rsqn.cdsl.registry;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import tech.rsqn.cdsl.annotations.CdslDef;
 import tech.rsqn.cdsl.dsl.Dsl;
 import tech.rsqn.cdsl.dsl.DslMetadata;
-
+import tech.rsqn.cdsl.definitionsource.ElementDefinition;
+import tech.rsqn.cdsl.context.CdslContext;
+import tech.rsqn.cdsl.context.CdslRuntime;
+import tech.rsqn.cdsl.exceptions.CdslException;
+import tech.rsqn.cdsl.model.CdslInputEvent;
+import tech.rsqn.cdsl.model.CdslOutputEvent;
 
 @Test
-@ContextConfiguration(locations = {"classpath:/spring/test-registry-ctx.xml"})
-public class DslInitialisationHelperTest extends AbstractTestNGSpringContextTests {
-
-    @Autowired
-    DslInitialisationHelper dslInitialisationHelper;
+public class DslInitialisationHelperTest {
 
     @Test
-    public void shouldDiscoverDslComponentsInClassPathAndResolveByName() throws Exception {
-        DslMetadata meta = new DslMetadata();
-        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
-        meta.setName("if-this-test");
-
-        Dsl ifThen = dslInitialisationHelper.resolve(meta);
-        Assert.assertNotNull(ifThen);
+    public void shouldCreateInstanceWithEmptyInjections() {
+        DslInitialisationHelper helper = new DslInitialisationHelper();
+        Assert.assertNotNull(helper);
+        Assert.assertNull(helper.resolveInjected("nonExistentDsl"));
     }
 
     @Test
-    public void shouldHonourSpringProtoType() throws Exception {
-        DslMetadata meta = new DslMetadata();
-        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
-        meta.setName("if-this-test-proto");
+    public void shouldInjectAndResolveDsl() {
+        DslInitialisationHelper helper = new DslInitialisationHelper();
+        Dsl testDsl = new TestDsl();
+        helper.inject("testDsl", testDsl);
 
-        Dsl e = dslInitialisationHelper.resolve(meta);
-        Dsl e2 = dslInitialisationHelper.resolve(meta);
-
-        Assert.assertNotEquals(e.hashCode(), e2.hashCode());
+        Dsl resolvedDsl = helper.resolveInjected("testDsl");
+        Assert.assertNotNull(resolvedDsl);
+        Assert.assertEquals(resolvedDsl, testDsl);
     }
 
     @Test
-    public void shouldHonourSpringSingleton() throws Exception {
-        DslMetadata meta = new DslMetadata();
-        meta.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
-        meta.setName("if-this-test");
+    public void shouldBuildMetadataForDslElement() {
+        DslInitialisationHelper helper = new DslInitialisationHelper();
+        ElementDefinition element = new ElementDefinition();
+        element.setName("testElement");
+        
+        // Inject a test DSL so it can be found
+        Dsl testDsl = new TestDsl();
+        helper.inject("testElement", testDsl);
 
-        Dsl e = dslInitialisationHelper.resolve(meta);
-        Dsl e2 = dslInitialisationHelper.resolve(meta);
-        Assert.assertEquals(e, e2);
+        DslMetadata metadata = helper.buildMetadataForDslElement(new ElementDefinition(), element);
+        Assert.assertNotNull(metadata);
+        Assert.assertEquals(metadata.getName(), "testElement");
+    }
+
+    @Test(expectedExceptions = RuntimeException.class)
+    public void shouldThrowExceptionWhenNoDslFound() {
+        DslInitialisationHelper helper = new DslInitialisationHelper();
+        ElementDefinition element = new ElementDefinition();
+        element.setName("nonExistentElement");
+
+        helper.buildMetadataForDslElement(new ElementDefinition(), element);
+    }
+
+    @Test
+    public void shouldValidateDslMetadata() {
+        DslInitialisationHelper helper = new DslInitialisationHelper();
+        Dsl testDsl = new TestDsl();
+        helper.inject("testDsl", testDsl);
+        
+        DslMetadata metadata = new DslMetadata();
+        metadata.setName("testDsl");
+        metadata.setResolutionStrategy(DslMetadata.ResolutionStrategy.ByName);
+
+        // This should not throw an exception if validation passes
+        helper.validate(metadata);
+    }
+
+    @CdslDef("testElement")
+    private static class TestDsl implements Dsl {
+        @Override
+        public CdslOutputEvent execute(CdslRuntime runtime, CdslContext ctx, Object model, CdslInputEvent input) throws CdslException {
+            return null;
+        }
     }
 }

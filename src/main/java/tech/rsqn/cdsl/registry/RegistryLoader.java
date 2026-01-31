@@ -42,6 +42,9 @@ public class RegistryLoader implements InitializingBean {
     }
     @Override
     public void afterPropertiesSet() throws Exception {
+        if (resources == null) {
+            throw new RuntimeException("Resources cannot be null");
+        }
         load();
     }
 }

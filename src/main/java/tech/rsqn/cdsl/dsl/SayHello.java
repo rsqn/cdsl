@@ -18,6 +18,12 @@ public class SayHello extends DslSupport<SayHelloModel,Serializable> {
 
     @Override
     public CdslOutputEvent execSupport(CdslRuntime runtime, CdslContext ctx, SayHelloModel config, CdslInputEvent input) throws CdslException {
+        if (config == null) {
+            throw new CdslException("SayHello model cannot be null");
+        }
+        if (config.getName() == null) {
+            throw new CdslException("SayHello 'name' property cannot be null");
+        }
         System.out.println("Hello " + config.getName());
         return null;
     }
