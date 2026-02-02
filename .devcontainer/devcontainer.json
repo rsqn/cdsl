@@ -37,6 +37,8 @@
     "remoteUser": "root",
     "containerUser": "root",
     "mounts": [
+        "source=vscode-ssh-keys,target=/root/.ssh,type=volume",
+        "source=vscode-aws-credentials,target=/root/.aws,type=volume",
         "source=vscode-maven-m2,target=/root/.m2,type=volume"
     ],
     "workspaceFolder": "/workspace",
