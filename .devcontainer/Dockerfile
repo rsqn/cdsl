@@ -20,6 +20,7 @@ RUN apt-get update && \
     gnupg \
     software-properties-common \
     ca-certificates \
+    openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Amazon Corretto 21 JDK
