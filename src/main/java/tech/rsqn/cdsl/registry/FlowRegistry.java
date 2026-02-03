@@ -10,12 +10,22 @@ import tech.rsqn.cdsl.execution.FlowStep;
 import tech.rsqn.cdsl.definitionsource.ElementDefinition;
 import tech.rsqn.cdsl.definitionsource.FlowDefinition;
 
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 public class FlowRegistry {
     private static final Logger logger = LoggerFactory.getLogger(FlowRegistry.class);
+
+    /** Tag names that are nested container DSLs (have executable child elements). */
+    private static final Set<String> NESTED_CONTAINER_NAMES = new HashSet<>();
+    static {
+        NESTED_CONTAINER_NAMES.add("if");
+        NESTED_CONTAINER_NAMES.add("foreach");
+        NESTED_CONTAINER_NAMES.add("fork");
+    }
 
     @Autowired
     private DslInitialisationHelper dslInitialisationHelper;
@@ -48,6 +58,17 @@ public class FlowRegistry {
                         step.addFinalElement(meta);
 
                     }
+                } else if (NESTED_CONTAINER_NAMES.contains(element.getName())) {
+                    // Nested container DSL: build model from attributes only, then register child elements as executable
+                    ElementDefinition attrsOnly = ElementDefinition.copyWithoutChildren(element);
+                    DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, attrsOnly);
+                    for (ElementDefinition child : element.getChildren()) {
+                        DslMetadata childMeta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, child);
+                        dslInitialisationHelper.validate(childMeta);
+                        meta.addChildElement(childMeta);
+                    }
+                    dslInitialisationHelper.validate(meta);
+                    step.addLogicElement(meta);
                 } else {
                     logger.info("Registering DSL (" + flowStep.getId() + "." + element.getName() + ")");
                     DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, element);

@@ -23,11 +23,12 @@ import tech.rsqn.cdsl.registry.DslInitialisationHelper;
 import tech.rsqn.cdsl.registry.FlowRegistry;
 import tech.rsqn.useful.things.identifiers.UIDHelper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FlowExecutor {
+public class FlowExecutor implements NestedElementExecutor {
     private static final Logger logger = LoggerFactory.getLogger(FlowExecutor.class);
     private Kryo kryo = new Kryo();
 
@@ -91,6 +92,12 @@ public class FlowExecutor {
         return ret;
     }
 
+    @Override
+    public CdslOutputEvent executeElements(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,
+                                           Flow flow, FlowStep step, List<DslMetadata> elements) {
+        return obtainOutputs(runtime, context, inputEvent, flow, step, elements);
+    }
+
     private CdslOutputEvent obtainOutputs(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent, Flow flow, FlowStep step, List<DslMetadata> elements) {
 
         for (DslMetadata dslMeta : elements) {
@@ -103,20 +110,47 @@ public class FlowExecutor {
             // build or intersect model
             Object model = intersectModel(dslMeta.getModel());
 
-            // execute the step
-            CdslOutputEvent output = dsl.execute(runtime, context, model, inputEvent);
+            runtime.setCurrentElementMetadata(dslMeta);
+            try {
+                // execute the step
+                CdslOutputEvent output = dsl.execute(runtime, context, model, inputEvent);
 
-            // handle output if required
-            if (output != null) {
-                logger.debug("DSL " + ll + " interim output  " + output.toString());
-                logger.debug("DSL " + ll + " output received - breaking");
-                return output;
-            } else {
-                logger.debug("DSL " + ll + " no output - continue to next step");
+                // handle output if required
+                if (output != null) {
+                    logger.debug("DSL " + ll + " interim output  " + output.toString());
+                    logger.debug("DSL " + ll + " output received - breaking");
+                    return output;
+                } else {
+                    logger.debug("DSL " + ll + " no output - continue to next step");
+                }
+            } finally {
+                runtime.setCurrentElementMetadata(null);
             }
         }
 
         return null;
+    }
+
+    /**
+     * Runs all elements in order; Route/Await/End are ignored (cannot route out of this block).
+     * Only Reject is propagated. Used by the fork container.
+     */
+    @Override
+    public CdslOutputEvent executeElementsIgnoreRouteOut(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,
+                                                         Flow flow, FlowStep step, List<DslMetadata> elements) {
+        for (DslMetadata dslMeta : elements) {
+            CdslOutputEvent output = executeOneElement(runtime, context, inputEvent, flow, step, dslMeta);
+            if (output != null && output.getAction() == CdslOutputEvent.Action.Reject) {
+                return output;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public CdslOutputEvent executeOneElement(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,
+                                             Flow flow, FlowStep step, DslMetadata element) {
+        return obtainOutputs(runtime, context, inputEvent, flow, step, Collections.singletonList(element));
     }
 
     public CdslFlowOutputEvent execute(Flow flow, CdslInputEvent inputEvent) {
@@ -154,6 +188,7 @@ public class FlowExecutor {
             runtime = new CdslRuntime();
             runtime.setAuditor(auditor);
             runtime.setTransactionId(lock.getId());
+            runtime.setNestedElementExecutor(this);
             context.setRuntime(runtime);
 
             // get the step
@@ -179,6 +214,8 @@ public class FlowExecutor {
                 runtime.getAuditor().transition(context, flow.getId(), nextStep.getId());
 
                 step = nextStep;
+                runtime.setCurrentFlow(flow);
+                runtime.setCurrentStep(step);
                 nextStep = null;
                 String logPrefix = step.getId();
 

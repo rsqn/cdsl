@@ -64,4 +64,19 @@ public class ElementDefinition {
     public void setClassifier(Classifier classifier) {
         this.classifier = classifier;
     }
+
+    /**
+     * Creates a copy of this element with the same id, name, classifier and attrs but no children.
+     * Used when building models for container DSLs (e.g. "if") so child elements are not mapped as model fields.
+     */
+    public static ElementDefinition copyWithoutChildren(ElementDefinition source) {
+        ElementDefinition copy = new ElementDefinition();
+        copy.setId(source.getId());
+        copy.setName(source.getName());
+        copy.setClassifier(source.getClassifier());
+        copy.setAttrs(source.getAttrs() != null ? new HashMap<>(source.getAttrs()) : new HashMap<>());
+        copy.setChildren(new ArrayList<>());
+        copy.setTextValue(source.getTextValue());
+        return copy;
+    }
 }

@@ -1,5 +1,8 @@
 package tech.rsqn.cdsl.dsl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DslMetadata<T> {
     public enum ResolutionStrategy {ByType, ByName}
     private String name;
@@ -7,6 +10,22 @@ public class DslMetadata<T> {
     private Class modelCls;
     private T model;
     private ResolutionStrategy resolutionStrategy;
+    private List<DslMetadata> childElements;
+
+    public List<DslMetadata> getChildElements() {
+        return childElements;
+    }
+
+    public void setChildElements(List<DslMetadata> childElements) {
+        this.childElements = childElements;
+    }
+
+    public void addChildElement(DslMetadata child) {
+        if (this.childElements == null) {
+            this.childElements = new ArrayList<>();
+        }
+        this.childElements.add(child);
+    }
 
     public String getName() {
         return name;

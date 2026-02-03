@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<cdsl>
+    <!-- Fork: nested commands within one step; cannot route out -->
+    <flow id="forkFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <fork>
+                <setVar name="a" val="1"/>
+                <setVar name="b" val="2"/>
+                <setVar name="c" val="3"/>
+            </fork>
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
+
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+</cdsl>

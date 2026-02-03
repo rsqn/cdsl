@@ -64,6 +64,56 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
 
     @Test
+    public void shouldRunIfWithNestedElementsWhenConditionMatches() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifWithNestedFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+
+        Assert.assertNotNull(output);
+        Assert.assertNotNull(output.getContextId());
+
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNotNull(context);
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
+        // Nested block ran: choice=yes so if body executed setVar whenYes=executed and routeTo end
+        Assert.assertEquals(context.getVar("whenYes"), "executed");
+    }
+
+    @Test
+    public void shouldRunForEachWithNestedElements() throws Exception {
+        Flow flow = flowRegistry.getFlow("foreachFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+
+        Assert.assertNotNull(output);
+        Assert.assertNotNull(output.getContextId());
+
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNotNull(context);
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
+        // Body ran each iteration; last iteration set lastItem (val="it" is literal, so lastItem is "it")
+        Assert.assertEquals(context.getVar("lastItem"), "it");
+    }
+
+    @Test
+    public void shouldRunForkNestedCommandsInOneStep() throws Exception {
+        Flow flow = flowRegistry.getFlow("forkFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+
+        Assert.assertNotNull(output);
+        Assert.assertNotNull(output.getContextId());
+
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNotNull(context);
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
+        // Fork ran all nested setVars in same step, then routeTo end
+        Assert.assertEquals(context.getVar("a"), "1");
+        Assert.assertEquals(context.getVar("b"), "2");
+        Assert.assertEquals(context.getVar("c"), "3");
+    }
+
+    @Test
     public void shouldExecuteInitStepIfNoStatePresent() throws Exception {
         Flow flow = flowRegistry.getFlow("shouldRunHelloWorldAndEndRoute");
         CdslOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message"));

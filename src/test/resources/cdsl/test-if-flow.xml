@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<cdsl>
+    <!-- If with nested elements: run body only when context var matches -->
+    <flow id="ifWithNestedFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="choice" val="yes"/>
+            <if var="choice" val="yes">
+                <setVar name="whenYes" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
+
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- ForEach: run nested elements once per item in a context list var (comma-separated) -->
+    <flow id="foreachFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="items" val="apple,banana,cherry"/>
+            <setVar name="lastItem" val=""/>
+            <foreach listVar="items" itemVar="it">
+                <setVar name="lastItem" val="it"/>
+            </foreach>
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
+
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+</cdsl>

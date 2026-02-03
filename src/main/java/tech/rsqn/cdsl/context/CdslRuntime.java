@@ -1,8 +1,11 @@
 package tech.rsqn.cdsl.context;
 
+import tech.rsqn.cdsl.dsl.DslMetadata;
+import tech.rsqn.cdsl.execution.Flow;
+import tech.rsqn.cdsl.execution.FlowStep;
+import tech.rsqn.cdsl.execution.NestedElementExecutor;
 import tech.rsqn.cdsl.execution.PostCommitTask;
 import tech.rsqn.cdsl.execution.PostStepTask;
-import tech.rsqn.cdsl.model.CdslOutputEvent;
 import tech.rsqn.cdsl.model.CdslOutputValue;
 
 import java.util.ArrayList;
@@ -16,6 +19,10 @@ public class CdslRuntime {
     private List<PostStepTask> postStepTasks;
     private List<PostCommitTask> postCommitTasks;
     private Map<String,CdslOutputValue> outputValueMap;
+    private NestedElementExecutor nestedElementExecutor;
+    private DslMetadata currentElementMetadata;
+    private Flow currentFlow;
+    private FlowStep currentStep;
 
     public CdslRuntime() {
         postStepTasks = new ArrayList<>();
@@ -73,5 +80,37 @@ public class CdslRuntime {
 
     public void setPostCommitTasks(List<PostCommitTask> postCommitTasks) {
         this.postCommitTasks = postCommitTasks;
+    }
+
+    public NestedElementExecutor getNestedElementExecutor() {
+        return nestedElementExecutor;
+    }
+
+    public void setNestedElementExecutor(NestedElementExecutor nestedElementExecutor) {
+        this.nestedElementExecutor = nestedElementExecutor;
+    }
+
+    public DslMetadata getCurrentElementMetadata() {
+        return currentElementMetadata;
+    }
+
+    public void setCurrentElementMetadata(DslMetadata currentElementMetadata) {
+        this.currentElementMetadata = currentElementMetadata;
+    }
+
+    public Flow getCurrentFlow() {
+        return currentFlow;
+    }
+
+    public void setCurrentFlow(Flow currentFlow) {
+        this.currentFlow = currentFlow;
+    }
+
+    public FlowStep getCurrentStep() {
+        return currentStep;
+    }
+
+    public void setCurrentStep(FlowStep currentStep) {
+        this.currentStep = currentStep;
     }
 }
