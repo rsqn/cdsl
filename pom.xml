@@ -34,7 +34,7 @@
         <connection>scm:git:git@github.com:rsqn/cdsl.git</connection>
         <developerConnection>scm:git:git@github.com:rsqn/cdsl.git</developerConnection>
         <url>https://github.com/rsqn/cdsl</url>
-        <tag>HEAD</tag>
+        <tag>cdsl-1.0.10</tag>
     </scm>
 
     <licenses>
