@@ -70,7 +70,7 @@ tech.rsqn.cdsl/
 │   ├── AbstractNestedDsl.java  # Base for container DSLs; runNestedElements() runs child DslMetadata list
 │   ├── If.java / IfModel.java   # Container: run nested elements only when context var matches val (or var set)
 │   ├── ForEach.java / ForEachModel.java  # Container: run nested once per item in context list var
-│   └── Fork.java            # Container: run all children in parallel; only Reject propagates
+│   └── Parallel.java        # Container: run all children in parallel; only Reject propagates
 ├── exceptions/
 │   ├── CdslException.java
 │   └── CdslValidationException.java
@@ -106,7 +106,7 @@ tech.rsqn.cdsl/
   - **Logic elements**: direct children (e.g. `<setVar name="x" val="y"/>`, `<routeTo target="next"/>`). Run in order; first non-null `CdslOutputEvent` stops the step and drives routing.
   - **Finally block**: one `<finally>` child containing more DSL elements. Run after logic; if they return an output, it overrides the logic output.
 - **Element names** map to DSLs: either a Spring bean name (e.g. `sayHello` for a bean named `"sayHello"`) or a class annotated with `@CdslDef("sayHello")`. Attributes and nested elements are mapped to the DSL’s model class by `DslModelBuilder` (reflection: setters and `MapModel`).
-- **Nested container elements**: `if`, `foreach`, and `fork` are **container DSLs**: they have child elements that are executed by the framework. For these, the model is built from **attributes only** (children are not mapped to the model); children are registered as executable `DslMetadata` and run via `NestedElementExecutor` (see below).
+- **Nested container elements**: `if`, `foreach`, and `parallel` are **container DSLs**: they have child elements that are executed by the framework. For these, the model is built from **attributes only** (children are not mapped to the model); children are registered as executable `DslMetadata` and run via `NestedElementExecutor` (see below).
 
 Example:
 
@@ -130,17 +130,17 @@ If a DSL throws, the executor routes to `errorStep` when set; otherwise it rethr
 
 ---
 
-## Nested container DSLs (if, foreach, fork) and abstract support
+## Nested container DSLs (if, foreach, parallel) and abstract support
 
 Some DSL elements **contain other DSL elements** and run them as a block. The framework supports this via:
 
-- **FlowRegistry.NESTED_CONTAINER_NAMES**: Tag names treated as containers are `if`, `foreach`, `fork`. When the registry sees one of these, it builds the parent’s model from **attributes only** (`ElementDefinition.copyWithoutChildren`), then builds separate `DslMetadata` for each child and attaches them with `meta.addChildElement(childMeta)`.
+- **FlowRegistry.NESTED_CONTAINER_NAMES**: Tag names treated as containers are `if`, `foreach`, `parallel`. When the registry sees one of these, it builds the parent’s model from **attributes only** (`ElementDefinition.copyWithoutChildren`), then builds separate `DslMetadata` for each child and attaches them with `meta.addChildElement(childMeta)`.
 - **CdslRuntime**: The executor sets `runtime.setCurrentElementMetadata(dslMeta)` before each DSL execute and clears it after, so container DSLs can read `runtime.getCurrentElementMetadata().getChildElements()`. It also sets `runtime.setNestedElementExecutor(this)` (FlowExecutor implements `NestedElementExecutor`), `runtime.setCurrentFlow(flow)`, and `runtime.setCurrentStep(step)` so nested execution has the same flow/step reference.
 - **AbstractNestedDsl**: Base class for DSLs that run their child elements. Subclasses implement `execSupport(...)` and, when they want to run the body, call `runNestedElements(runtime, ctx, input)`. That uses `runtime.getCurrentElementMetadata().getChildElements()` and `runtime.getNestedElementExecutor().executeElements(...)` to run the children with the same semantics as a step (first non-null Route/Await/End/Reject stops and is returned).
 - **NestedElementExecutor** (implemented by FlowExecutor):
   - `executeElements(runtime, context, inputEvent, flow, step, elements)` — runs elements in order; first non-null output is returned (Route/Await/End/Reject all propagate).
-  - `executeElementsIgnoreRouteOut(...)` — runs all elements; only **Reject** is returned (used by fork).
-  - `executeOneElement(...)` — runs a single element and returns its output (used by fork for parallel branches).
+  - `executeElementsIgnoreRouteOut(...)` — runs all elements; only **Reject** is returned (used by `parallel`).
+  - `executeOneElement(...)` — runs a single element and returns its output (used by `parallel` for each branch).
 
 ### Built-in container DSLs
 
@@ -148,9 +148,11 @@ Some DSL elements **contain other DSL elements** and run them as a block. The fr
 |-------------|---------|--------|-------------------------|
 | **if** | Run nested elements only when a condition holds. Condition: context variable `var`; if `val` is set, run when `ctx.getVar(var)` equals `val`; if only `var` is set, run when that variable is non-null and non-empty. | IfModel (var, val) | Run once if condition true; Route/Await/End/Reject from body propagate. |
 | **foreach** | Run nested elements once per item in a context list. List is a context variable (e.g. comma-separated string). Each iteration sets the current item into another context variable (`itemVar`), then runs the body. | ForEachModel (listVar, itemVar, separator) | Run in order per item; if body returns Route/Await/End/Reject, that is returned and the loop stops. |
-| **fork** | Run all child elements in **parallel** (same context, separate CdslRuntime per branch). | MapModel | Route/Await/End from children are **ignored**; only **Reject** is propagated. |
+| **parallel** | Run all child elements in **parallel** (same context, separate CdslRuntime per branch). | MapModel | Route/Await/End from children are **ignored**; only **Reject** is propagated. |
 
 **Note:** There is no built-in **while** DSL; use **foreach** over a list when you need iteration.
+
+**Concurrency note (important):** `parallel` shares the same `CdslContext` instance across threads. Today `CdslContext.vars` is a plain `HashMap`, so **concurrent writes to context variables are not thread-safe**. Use `parallel` only when child DSLs do not concurrently mutate shared state (or change the context implementation to a concurrent structure / add synchronization).
 
 Example (if with nested elements):
 
@@ -172,6 +174,17 @@ Example (foreach):
   <setVar name="lastItem" val="it"/>
 </foreach>
 ```
+
+Example (parallel):
+
+```xml
+<parallel>
+  <setVar name="a" val="1"/>
+  <setVar name="b" val="2"/>
+</parallel>
+```
+
+Inside `parallel`, child outputs like Route/Await/End are ignored (you cannot route out of the step from inside `parallel`). If any branch throws an exception, `parallel` throws a `CdslException` and the flow will enter `errorStep` (if configured) via the normal executor error handling.
 
 To implement a **custom container DSL**: extend `AbstractNestedDsl<MyModel, MT>`, implement `execSupport` to decide when to run the body, then call `return runNestedElements(runtime, ctx, input)`. To have your tag treated as a container, add its name to `FlowRegistry.NESTED_CONTAINER_NAMES` (or the registry will not attach child elements as executable; they would be used only for model building).
 
@@ -267,9 +280,9 @@ Example minimal integration context (see `src/test/resources/spring/test-registr
 | `injected` | DSL resolved by name (for tests) | name | — |
 | **if** | Run nested elements only when context var matches (see Nested container DSLs) | IfModel (var, val) | body output propagates |
 | **foreach** | Run nested elements once per item in context list var | ForEachModel (listVar, itemVar, separator) | body output propagates, stops loop |
-| **fork** | Run all child elements in parallel; only Reject propagates | MapModel | executeElementsIgnoreRouteOut |
+| **parallel** | Run all child elements in parallel; only Reject propagates | MapModel | executeElementsIgnoreRouteOut |
 
-Step structure: **logic** elements first, then **finally** (optional). Output from **finally** overrides **logic** for routing. **Container** elements (`if`, `foreach`, `fork`) have executable child elements; the container’s model is built from attributes only.
+Step structure: **logic** elements first, then **finally** (optional). Output from **finally** overrides **logic** for routing. **Container** elements (`if`, `foreach`, `parallel`) have executable child elements; the container’s model is built from attributes only.
 
 ---
 
@@ -296,7 +309,7 @@ Step structure: **logic** elements first, then **finally** (optional). Output fr
 - **XmlDomDefinitionSource.loadCdslDefinition(resource)**  
   Loads a single XML resource from classpath and returns DocumentDefinition (list of FlowDefinitions).
 
-- **Nested containers (if, foreach, fork)**  
+- **Nested containers (if, foreach, parallel)**  
   FlowRegistry treats tag names in `NESTED_CONTAINER_NAMES` specially: model from attributes only, children become `DslMetadata` attached via `meta.addChildElement(childMeta)`. Container DSLs extend `AbstractNestedDsl` and call `runNestedElements(runtime, ctx, input)`, which uses `runtime.getCurrentElementMetadata().getChildElements()` and `runtime.getNestedElementExecutor().executeElements(...)`. FlowExecutor implements NestedElementExecutor and sets it (and currentFlow, currentStep, currentElementMetadata) on the runtime before running each element.
 
 ---
