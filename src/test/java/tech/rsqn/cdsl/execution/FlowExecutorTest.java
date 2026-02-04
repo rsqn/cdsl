@@ -80,6 +80,56 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void shouldRunIfWhenConditionIsLiteralTrue() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionTrueFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getVar("whenTrue"), "executed");
+    }
+
+    @Test
+    public void shouldNotRunIfWhenConditionIsLiteralFalse() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionFalseFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertNull(context.getVar("whenTrue"));
+    }
+
+    @Test
+    public void shouldRunIfWhenConditionIsVarExists() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionVarExistsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getVar("whenFlagSet"), "executed");
+    }
+
+    @Test
+    public void shouldRunIfWhenConditionIsVarEquals() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionEqualsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getVar("whenAdmin"), "executed");
+    }
+
+    @Test
+    public void shouldRunIfWhenConditionIsVarNotEquals() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionNotEqualsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getVar("whenNotAdmin"), "executed");
+    }
+
+    @Test
     public void shouldRunForEachWithNestedElements() throws Exception {
         Flow flow = flowRegistry.getFlow("foreachFlow");
         CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));

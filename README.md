@@ -68,7 +68,7 @@ tech.rsqn.cdsl/
 │   ├── WhitelistEvents.java # Input validation / routing
 │   ├── Injected.java        # Resolved by name (injected DSL)
 │   ├── AbstractNestedDsl.java  # Base for container DSLs; runNestedElements() runs child DslMetadata list
-│   ├── If.java / IfModel.java   # Container: run nested elements only when context var matches val (or var set)
+│   ├── If.java / IfModel.java   # Container: run nested elements when condition holds (literal or context syntax)
 │   ├── ForEach.java / ForEachModel.java  # Container: run nested once per item in context list var
 │   └── Parallel.java        # Container: run all children in parallel; only Reject propagates
 ├── exceptions/
@@ -146,7 +146,7 @@ Some DSL elements **contain other DSL elements** and run them as a block. The fr
 
 | XML element | Purpose | Model | Nested body behaviour |
 |-------------|---------|--------|-------------------------|
-| **if** | Run nested elements only when a condition holds. Condition: context variable `var`; if `val` is set, run when `ctx.getVar(var)` equals `val`; if only `var` is set, run when that variable is non-null and non-empty. | IfModel (var, val) | Run once if condition true; Route/Await/End/Reject from body propagate. |
+| **if** | Run nested elements only when a condition holds. `condition` can be literal `true`/`false`, or context syntax `varName`, `varName=value`, `varName!=value`. | IfModel (condition) | Run once if condition true; Route/Await/End/Reject from body propagate. |
 | **foreach** | Run nested elements once per item in a context list. List is a context variable (e.g. comma-separated string). Each iteration sets the current item into another context variable (`itemVar`), then runs the body. | ForEachModel (listVar, itemVar, separator) | Run in order per item; if body returns Route/Await/End/Reject, that is returned and the loop stops. |
 | **parallel** | Run all child elements in **parallel** (same context, separate CdslRuntime per branch). | MapModel | Route/Await/End from children are **ignored**; only **Reject** is propagated. |
 
@@ -159,11 +159,17 @@ Example (if with nested elements):
 ```xml
 <step id="init">
   <setVar name="choice" val="yes"/>
-  <if var="choice" val="yes">
+  <if condition="choice=yes">
     <setVar name="whenYes" val="executed"/>
     <routeTo target="end"/>
   </if>
 </step>
+
+<!-- Other condition forms -->
+<if condition="true">...</if>
+<if condition="flag">...</if>                    <!-- true when ctx.getVar("flag") is non-empty -->
+<if condition="role=admin">...</if>              <!-- true when ctx.getVar("role") equals "admin" -->
+<if condition="role!=guest">...</if>             <!-- true when ctx.getVar("role") does not equal "guest" -->
 ```
 
 Example (foreach):
@@ -278,7 +284,7 @@ Example minimal integration context (see `src/test/resources/spring/test-registr
 | `raiseException` | Throws (for error handling tests) | — | — |
 | `whitelist` / `whiteList` | Validate input / route on failure | WhitelistEventsModel | Route/Reject depending on config |
 | `injected` | DSL resolved by name (for tests) | name | — |
-| **if** | Run nested elements only when context var matches (see Nested container DSLs) | IfModel (var, val) | body output propagates |
+| **if** | Run nested elements only when condition holds (see Nested container DSLs) | IfModel (condition) | body output propagates |
 | **foreach** | Run nested elements once per item in context list var | ForEachModel (listVar, itemVar, separator) | body output propagates, stops loop |
 | **parallel** | Run all child elements in parallel; only Reject propagates | MapModel | executeElementsIgnoreRouteOut |
 

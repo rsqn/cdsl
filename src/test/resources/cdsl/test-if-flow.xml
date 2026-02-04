@@ -6,7 +6,7 @@
         <step id="init">
             <setState val="Alive"/>
             <setVar name="choice" val="yes"/>
-            <if var="choice" val="yes">
+            <if condition="choice=yes">
                 <setVar name="whenYes" val="executed"/>
                 <routeTo target="end"/>
             </if>
@@ -20,6 +20,109 @@
             </finally>
         </step>
 
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: literal true -->
+    <flow id="ifConditionTrueFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <if condition="true">
+                <setVar name="whenTrue" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: literal false -->
+    <flow id="ifConditionFalseFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <if condition="false">
+                <setVar name="whenTrue" val="shouldNotRun"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: varName (exists and non-empty) -->
+    <flow id="ifConditionVarExistsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="flag" val="set"/>
+            <if condition="flag">
+                <setVar name="whenFlagSet" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: varName=value -->
+    <flow id="ifConditionEqualsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="role" val="admin"/>
+            <if condition="role=admin">
+                <setVar name="whenAdmin" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: varName!=value -->
+    <flow id="ifConditionNotEqualsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="role" val="user"/>
+            <if condition="role!=admin">
+                <setVar name="whenNotAdmin" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
         <step id="error">
             <setState val="Error"/>
             <endRoute/>

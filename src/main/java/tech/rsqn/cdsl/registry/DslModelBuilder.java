@@ -5,6 +5,7 @@ import tech.rsqn.cdsl.dsl.MapModel;
 import tech.rsqn.reflectionhelpers.AttributeDescriptor;
 import tech.rsqn.reflectionhelpers.ReflectionHelper;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,9 @@ import java.util.Map;
 public class DslModelBuilder {
     public <T> T buildModel(ElementDefinition dslElement, Class modelClass) {
         try {
-            T ret = (T) modelClass.newInstance();
+            Constructor<?> ctor = modelClass.getDeclaredConstructor();
+            ctor.setAccessible(true);
+            T ret = (T) ctor.newInstance();
             recurseElementAndPopulateModel(dslElement, ret);
             return ret;
         } catch (Exception e) {
@@ -56,7 +59,9 @@ public class DslModelBuilder {
                 } else if (isMap(attr.getType())) {
                     recurseElementAndPopulateMap(child, attr.getName(), o);
                 } else {
-                    Object fv = attr.getType().newInstance();
+                    Constructor<?> ctor = attr.getType().getDeclaredConstructor();
+                    ctor.setAccessible(true);
+                    Object fv = ctor.newInstance();
                     recurseElementAndPopulateModel(child, fv);
                 }
             }
