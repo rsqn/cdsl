@@ -18,6 +18,7 @@ RUN apt-get update && \
     zip \
     unzip \
     gnupg \
+    gnupg2 \
     software-properties-common \
     ca-certificates \
     openssh-client \
@@ -44,6 +45,9 @@ WORKDIR /workspace
 
 # Create .m2 directory for Maven
 RUN mkdir -p /root/.m2
+
+# Ensure gpg2 is available (Maven GPG plugin expects it)
+RUN ln -sf $(which gpg) /usr/bin/gpg2 2>/dev/null || true
 
 # Set PATH to include Java
 ENV PATH="${JAVA_HOME}/bin:${PATH}"

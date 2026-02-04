@@ -39,7 +39,8 @@
     "mounts": [
         "source=vscode-ssh-keys,target=/root/.ssh,type=volume",
         "source=vscode-aws-credentials,target=/root/.aws,type=volume",
-        "source=vscode-maven-m2,target=/root/.m2,type=volume"
+        "source=vscode-maven-m2,target=/root/.m2,type=volume",
+        "source=vscode-gnupg,target=/root/.gnupg,type=volume"
     ],
     "workspaceFolder": "/workspace",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
