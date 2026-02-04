@@ -19,14 +19,14 @@ public interface NestedElementExecutor {
 
     /**
      * Runs all elements in order; Route/Await/End are ignored (cannot route out).
-     * Only Reject is propagated. Used by the fork container.
+     * Only Reject is propagated. Used by the parallel container.
      */
     CdslOutputEvent executeElementsIgnoreRouteOut(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,
                                                   Flow flow, FlowStep step, List<DslMetadata> elements);
 
     /**
      * Runs a single element; returns its output (caller may ignore Route/End/Await).
-     * Used by fork to run each child in parallel with a dedicated runtime per task.
+     * Used by parallel to run each child with a dedicated runtime per task.
      */
     CdslOutputEvent executeOneElement(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,
                                       Flow flow, FlowStep step, DslMetadata element);

@@ -27,7 +27,7 @@
             <list>
                 <value>/cdsl/test-integration-flow.xml</value>
                 <value>/cdsl/test-if-flow.xml</value>
-                <value>/cdsl/test-fork-flow.xml</value>
+                <value>/cdsl/test-parallel-flow.xml</value>
             </list>
         </property>
     </bean>

@@ -25,14 +25,14 @@ import java.util.concurrent.Future;
 
 /**
  * Nested container: runs all child elements in parallel within the same step.
- * Route/Await/End from children are ignored (you cannot route out of the step from inside a fork).
- * Only Reject is propagated. Same context is shared (thread-safe); each child runs with its own CdslRuntime.
+ * Route/Await/End from children are ignored (you cannot route out of the step from inside parallel).
+ * Only Reject is propagated. Same context is shared; each child runs with its own CdslRuntime.
  */
-@CdslDef("fork")
+@CdslDef("parallel")
 @CdslModel(MapModel.class)
 @Component
-public class Fork extends DslSupport<MapModel, Serializable> {
-    private static final Logger logger = LoggerFactory.getLogger(Fork.class);
+public class Parallel extends DslSupport<MapModel, Serializable> {
+    private static final Logger logger = LoggerFactory.getLogger(Parallel.class);
 
     private static final ExecutorService PARALLEL_POOL = Executors.newFixedThreadPool(
             Math.max(2, Runtime.getRuntime().availableProcessors()));
@@ -47,12 +47,12 @@ public class Fork extends DslSupport<MapModel, Serializable> {
         }
         NestedElementExecutor executor = runtime.getNestedElementExecutor();
         if (executor == null) {
-            throw new CdslException("NestedElementExecutor not set on runtime - cannot run fork body");
+            throw new CdslException("NestedElementExecutor not set on runtime - cannot run parallel body");
         }
         Flow flowRef = runtime.getCurrentFlow();
         FlowStep stepRef = runtime.getCurrentStep();
         if (flowRef == null || stepRef == null) {
-            throw new CdslException("Current flow/step not set on runtime - cannot run fork body");
+            throw new CdslException("Current flow/step not set on runtime - cannot run parallel body");
         }
 
         List<Future<CdslOutputEvent>> futures = new ArrayList<>();
@@ -81,9 +81,9 @@ public class Fork extends DslSupport<MapModel, Serializable> {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new CdslException("Fork interrupted", e);
+                throw new CdslException("Parallel interrupted", e);
             } catch (ExecutionException e) {
-                throw new CdslException("Fork branch failed", e.getCause());
+                throw new CdslException("Parallel branch failed", e.getCause());
             }
         }
         return rejectResult;

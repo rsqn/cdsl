@@ -133,7 +133,7 @@ public class FlowExecutor implements NestedElementExecutor {
 
     /**
      * Runs all elements in order; Route/Await/End are ignored (cannot route out of this block).
-     * Only Reject is propagated. Used by the fork container.
+     * Only Reject is propagated. Used by the parallel container.
      */
     @Override
     public CdslOutputEvent executeElementsIgnoreRouteOut(CdslRuntime runtime, CdslContext context, CdslInputEvent inputEvent,

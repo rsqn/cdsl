@@ -96,8 +96,8 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void shouldRunForkNestedCommandsInOneStep() throws Exception {
-        Flow flow = flowRegistry.getFlow("forkFlow");
+    public void shouldRunParallelNestedCommandsInOneStep() throws Exception {
+        Flow flow = flowRegistry.getFlow("parallelFlow");
         CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
 
         Assert.assertNotNull(output);
@@ -107,7 +107,7 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertNotNull(context);
         Assert.assertEquals(context.getCurrentStep(), "end");
         Assert.assertEquals(context.getState(), CdslContext.State.End);
-        // Fork ran all nested setVars in same step, then routeTo end
+        // Parallel ran all nested setVars in same step, then routeTo end
         Assert.assertEquals(context.getVar("a"), "1");
         Assert.assertEquals(context.getVar("b"), "2");
         Assert.assertEquals(context.getVar("c"), "3");

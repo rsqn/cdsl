@@ -24,7 +24,7 @@ public class FlowRegistry {
     static {
         NESTED_CONTAINER_NAMES.add("if");
         NESTED_CONTAINER_NAMES.add("foreach");
-        NESTED_CONTAINER_NAMES.add("fork");
+        NESTED_CONTAINER_NAMES.add("parallel");
     }
 
     @Autowired
