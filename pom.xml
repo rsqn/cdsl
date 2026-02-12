@@ -9,7 +9,7 @@
 
     <groupId>tech.rsqn.cdsl</groupId>
     <artifactId>cdsl</artifactId>
-    <version>1.0.11-SNAPSHOT</version>
+    <version>1.0.13-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>cdsl</name>
@@ -111,7 +111,7 @@
         <dependency>
             <groupId>tech.rsqn.useful-things</groupId>
             <artifactId>simple-utilities</artifactId>
-            <version>1.0.38</version>
+            <version>1.0.78</version>
             <scope>compile</scope>
         </dependency>
 
