@@ -27,13 +27,11 @@
                 "vscjava.vscode-java-dependency",
                 "redhat.java",
                 "ms-vscode.vscode-json",
-                "redhat.vscode-yaml",
-                "github.copilot",
-                "github.copilot-chat"
+                "redhat.vscode-yaml"
             ]
         }
     },
-    "postCreateCommand": "chmod +x .devcontainer/post-create.sh dev_helpers.sh && ./.devcontainer/post-create.sh",
+    "postCreateCommand": "dos2unix .devcontainer/post-create.sh dev_helpers.sh && chmod +x .devcontainer/post-create.sh dev_helpers.sh && ./.devcontainer/post-create.sh",
     "remoteUser": "root",
     "containerUser": "root",
     "mounts": [
