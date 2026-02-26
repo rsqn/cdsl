@@ -325,6 +325,10 @@ Step structure: **logic** elements first, then **finally** (optional). Output fr
 - **Unit tests**: Use `DslInitialisationHelper.inject(name, dsl)` or `injectStatic(name, dsl)` to register DSLs by name. Use `LockProviderUnitTestSupport`, `CdslContextRepositoryUnitTestSupport`, `CdslContextAuditorUnitTestSupport` so no real lock or persistence is required.
 - **Integration tests**: See `FlowExecutorTest` and `test-registry-integration-ctx.xml`: component-scan + RegistryLoader with `resources` to `test-integration-flow.xml`, and test beans for executor, lock, repository, auditor. Run a flow with `executor.execute(flowRegistry.getFlow("flow-id"), new CdslInputEvent().with("source", "name"))` and assert on `CdslFlowOutputEvent` and repository context.
 
+**Testing guide for consumers:** See **[docs/testing-guide.md](docs/testing-guide.md)** for:
+- **Mocking DSLs entirely** — `dslHelper.inject("elementName", dsl)` to replace flow steps by name, `StaticDslTestSupport.staticDsl` for the static-test-support DSL, and `DslTestSupport.withDsl(dsl)` for single-DSL unit tests.
+- **Forcing the state machine to start (or continue) where you want** — resume with `andContextId(contextId)`, or start at a specific step by pre-seating a context or using `andStep(stepId)` on the input event.
+
 ---
 
 ## Dependencies (from pom.xml)
