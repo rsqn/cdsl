@@ -32,12 +32,16 @@ public class ForEach extends AbstractNestedDsl<ForEachModel, Serializable> {
         if (StringUtils.isEmpty(listStr)) {
             return null;
         }
+        // Capture before the loop: executing the body mutates runtime.currentElementMetadata
+        // (the executor nulls it in a finally after each child), so re-reading it on later
+        // iterations would return null and silently skip the body.
+        DslMetadata<?> foreachMeta = runtime.getCurrentElementMetadata();
         String sep = StringUtils.isNotEmpty(model.getSeparator()) ? model.getSeparator() : ",";
         String[] items = listStr.split(sep);
         for (String item : items) {
             String trimmed = item != null ? item.trim() : "";
             ctx.putVar(model.getItemVar(), trimmed);
-            CdslOutputEvent output = runNestedElements(runtime, ctx, input);
+            CdslOutputEvent output = runNestedElements(runtime, ctx, input, foreachMeta);
             if (output != null) {
                 return output;
             }

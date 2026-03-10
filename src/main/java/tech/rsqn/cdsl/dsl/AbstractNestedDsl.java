@@ -27,9 +27,21 @@ public abstract class AbstractNestedDsl<T, MT extends Serializable> extends DslS
      */
     protected CdslOutputEvent runNestedElements(CdslRuntime runtime, CdslContext ctx,
                                                 CdslInputEvent<MT> input) throws CdslException {
-        List<DslMetadata> children = runtime.getCurrentElementMetadata() != null
-                ? runtime.getCurrentElementMetadata().getChildElements()
-                : null;
+        return runNestedElements(runtime, ctx, input, runtime.getCurrentElementMetadata());
+    }
+
+    /**
+     * Runs the nested child elements using an explicitly supplied metadata snapshot.
+     * Use this overload when the caller needs to invoke the body multiple times (e.g. foreach),
+     * because executing the body mutates runtime.currentElementMetadata away from the container
+     * element, causing the no-arg overload to return empty on subsequent calls.
+     *
+     * @param elementMeta the container element whose children should be executed
+     * @return the first non-null output from a child, or null if all ran without output
+     */
+    protected CdslOutputEvent runNestedElements(CdslRuntime runtime, CdslContext ctx,
+                                                CdslInputEvent<MT> input, DslMetadata<?> elementMeta) throws CdslException {
+        List<DslMetadata> children = elementMeta != null ? elementMeta.getChildElements() : null;
         if (children == null || children.isEmpty()) {
             return null;
         }

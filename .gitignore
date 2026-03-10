@@ -25,3 +25,10 @@ hs_err_pid*
 target
 .idea
 *.iml
+
+# Maven release plugin working files
+release.properties
+pom.xml.releaseBackup
+
+# Claude Code
+.claude/

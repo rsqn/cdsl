@@ -153,4 +153,28 @@
             <endRoute/>
         </step>
     </flow>
+
+    <!-- ForEach multi-iteration: verifies body runs once per item, not just the first -->
+    <flow id="foreachAllIterationsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="symbols" val="A,B,C"/>
+            <foreach listVar="symbols" itemVar="sym">
+                <injected name="foreachBodyCounter"/>
+            </foreach>
+            <routeTo target="end"/>
+        </step>
+
+        <step id="end">
+            <endRoute/>
+            <finally>
+                <setState val="End"/>
+            </finally>
+        </step>
+
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
 </cdsl>

@@ -145,6 +145,36 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertEquals(context.getVar("lastItem"), "it");
     }
 
+    /**
+     * Regression test for Bug #1: foreach only executed the first iteration.
+     * The body is an injected counter; with 3 items it must fire exactly 3 times.
+     * Before the fix, runtime.getCurrentElementMetadata() was nulled out by the executor's
+     * finally block after the first iteration, so subsequent calls to runNestedElements()
+     * returned an empty children list and silently did nothing.
+     */
+    @Test
+    public void shouldRunForEachBodyOncePerItem() throws Exception {
+        AtomicInteger bodyCallCount = new AtomicInteger(0);
+        AtomicReference<String> lastSeenItem = new AtomicReference<>();
+
+        dslHelper.inject("foreachBodyCounter", (runtime, ctx, model, input) -> {
+            bodyCallCount.incrementAndGet();
+            lastSeenItem.set(ctx.getVar("sym"));
+            return null;
+        });
+
+        Flow flow = flowRegistry.getFlow("foreachAllIterationsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getState(), CdslContext.State.End);
+
+        // Body must have run once for each of the 3 items (A, B, C), not just the first
+        Assert.assertEquals(bodyCallCount.get(), 3, "foreach body should run once per item");
+        Assert.assertEquals(lastSeenItem.get(), "C", "last item seen should be the third item");
+    }
+
     @Test
     public void shouldRunParallelNestedCommandsInOneStep() throws Exception {
         Flow flow = flowRegistry.getFlow("parallelFlow");

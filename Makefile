@@ -1,4 +1,9 @@
-.PHONY: build release check-clean
+MVN := mvn
+
+.PHONY: clean compile test package install verify deploy build \
+        check-clean release release-dry-run release-rollback
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 check-clean:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -6,22 +11,50 @@ check-clean:
 		exit 1; \
 	fi
 
-build:
-	mvn clean install
+# ── Standard Maven lifecycle ──────────────────────────────────────────────────
 
-release: check-clean build
-	@echo "Calculating versions..."
-	@current_version=$$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout); \
-	release_version=$$(echo $$current_version | sed 's/-SNAPSHOT//'); \
-	next_version=$$(echo $$release_version | awk -F. '{$$NF = $$NF + 1;} 1' OFS=.)-SNAPSHOT; \
-	echo "Current version: $$current_version"; \
-	echo "Release version: $$release_version"; \
-	echo "Next snapshot:   $$next_version"; \
-	mvn versions:set -DnewVersion=$$release_version -DgenerateBackupPoms=false; \
-	git add pom.xml; \
-	git commit -m "Release $$release_version"; \
-	git tag -a v$$release_version -m "Release $$release_version"; \
-	mvn versions:set -DnewVersion=$$next_version -DgenerateBackupPoms=false; \
-	git add pom.xml; \
-	git commit -m "Prepare for next development iteration $$next_version"; \
-	echo "Release $$release_version completed. Now on $$next_version."
+clean:
+	$(MVN) clean
+
+compile:
+	$(MVN) compile
+
+test:
+	$(MVN) test
+
+package:
+	$(MVN) package
+
+install:
+	$(MVN) install
+
+verify:
+	$(MVN) verify
+
+deploy:
+	$(MVN) deploy
+
+build:
+	$(MVN) clean install
+
+# ── Release ───────────────────────────────────────────────────────────────────
+#
+# maven-release-plugin handles the full release sequence:
+#   release:prepare  — strips -SNAPSHOT, commits, tags, bumps to next
+#                      -SNAPSHOT version, commits that too
+#   release:perform  — checks out the tag, builds, signs, and deploys
+#                      to the configured repository
+#
+# Credentials for the OSSRH/Central staging API must be present in
+# ~/.m2/settings.xml under server id "ossrh".
+
+release: check-clean
+	$(MVN) release:prepare release:perform
+
+# Rehearse without writing anything (no commits, no tags, no deploy)
+release-dry-run:
+	$(MVN) release:prepare -DdryRun=true
+
+# Undo a failed/partial release:prepare (removes tag, restores pom.xml)
+release-rollback:
+	$(MVN) release:rollback
