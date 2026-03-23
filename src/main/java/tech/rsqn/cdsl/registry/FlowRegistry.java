@@ -56,18 +56,9 @@ public class FlowRegistry {
                         DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, finalElement);
                         dslInitialisationHelper.validate(meta);
                         step.addFinalElement(meta);
-
                     }
                 } else if (NESTED_CONTAINER_NAMES.contains(element.getName())) {
-                    // Nested container DSL: build model from attributes only, then register child elements as executable
-                    ElementDefinition attrsOnly = ElementDefinition.copyWithoutChildren(element);
-                    DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, attrsOnly);
-                    for (ElementDefinition child : element.getChildren()) {
-                        DslMetadata childMeta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, child);
-                        dslInitialisationHelper.validate(childMeta);
-                        meta.addChildElement(childMeta);
-                    }
-                    dslInitialisationHelper.validate(meta);
+                    DslMetadata meta = buildNestedContainerMeta(flowStep, element);
                     step.addLogicElement(meta);
                 } else {
                     logger.info("Registering DSL (" + flowStep.getId() + "." + element.getName() + ")");
@@ -75,12 +66,44 @@ public class FlowRegistry {
                     dslInitialisationHelper.validate(meta);
                     step.addLogicElement(meta);
                 }
-
             }
             flow.putStep(flowStep.getId(), step);
         }
 
         flows.put(def.getId(), flow);
+    }
+
+    /**
+     * Recursively builds {@link DslMetadata} for a nested container element
+     * (e.g. {@code foreach}, {@code if}).
+     *
+     * <p>The container's model is built from attributes only (children are stripped
+     * to prevent {@code DslModelBuilder} from trying to map child DSL elements as
+     * model fields).  Each child element is then processed recursively so that
+     * nested containers (e.g. {@code <if>} inside {@code <foreach>}) are handled
+     * correctly at any depth.
+     *
+     * @param flowStep the parent step element (used for logging and model building)
+     * @param element  the nested container element to register
+     * @return fully populated {@link DslMetadata} for the container
+     */
+    private DslMetadata buildNestedContainerMeta(ElementDefinition flowStep, ElementDefinition element) {
+        // Build model from attributes only — children are executable DSLs, not model fields
+        ElementDefinition attrsOnly = ElementDefinition.copyWithoutChildren(element);
+        DslMetadata meta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, attrsOnly);
+        for (ElementDefinition child : element.getChildren()) {
+            DslMetadata childMeta;
+            if (NESTED_CONTAINER_NAMES.contains(child.getName())) {
+                // Recurse: child is itself a nested container (e.g. <if> inside <foreach>)
+                childMeta = buildNestedContainerMeta(flowStep, child);
+            } else {
+                childMeta = dslInitialisationHelper.buildMetadataForDslElement(flowStep, child);
+                dslInitialisationHelper.validate(childMeta);
+            }
+            meta.addChildElement(childMeta);
+        }
+        dslInitialisationHelper.validate(meta);
+        return meta;
     }
 
 }

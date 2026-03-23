@@ -129,6 +129,81 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
         Assert.assertEquals(context.getVar("whenNotAdmin"), "executed");
     }
 
+    // -----------------------------------------------------------------------
+    // If condition: == operator and || operator (added with 1.0.15-SNAPSHOT)
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void shouldRunIfWhenConditionIsDoubleEquals() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionDoubleEqualsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getCurrentStep(), "end");
+        Assert.assertEquals(context.getVar("whenAdmin"), "executed",
+                "== operator must match when var equals value");
+    }
+
+    @Test
+    public void shouldRunIfWhenConditionIsDoubleEqualsWithSingleQuotedValue() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionDoubleEqualsQuotedFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("whenCrisis"), "executed",
+                "== with single-quoted expected value ('CRISIS') must strip quotes before comparison");
+    }
+
+    @Test
+    public void shouldNotRunIfWhenDoubleEqualsValueDoesNotMatch() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionDoubleEqualsNoMatchFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNull(context.getVar("shouldNotRun"),
+                "== must not match when var value differs from expected");
+    }
+
+    @Test
+    public void shouldRunIfWhenOrConditionFirstBranchMatches() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionOrFirstMatchFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("buyBlocked"), "true",
+                "|| condition must fire when first branch (CRISIS) matches");
+    }
+
+    @Test
+    public void shouldRunIfWhenOrConditionSecondBranchMatches() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionOrSecondMatchFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("buyBlocked"), "true",
+                "|| condition must fire when second branch (EXTREME) matches");
+    }
+
+    @Test
+    public void shouldNotRunIfWhenOrConditionNeitherBranchMatches() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionOrNoMatchFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNull(context.getVar("buyBlocked"),
+                "|| condition must not fire when neither branch matches (NORMAL is not CRISIS or EXTREME)");
+    }
+
+    @Test
+    public void shouldRunIfWhenSingleEqualsWithSingleQuotedValue() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionSingleEqualsQuotedFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("whenActive"), "executed",
+                "single = with single-quoted value ('active') must still work (backwards-compat)");
+    }
+
     @Test
     public void shouldRunForEachWithNestedElements() throws Exception {
         Flow flow = flowRegistry.getFlow("foreachFlow");

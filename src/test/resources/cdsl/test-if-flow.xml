@@ -129,6 +129,153 @@
         </step>
     </flow>
 
+    <!-- Condition expression: varName == value (double-equals, no quotes) -->
+    <flow id="ifConditionDoubleEqualsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="role" val="admin"/>
+            <if condition="role == admin">
+                <setVar name="whenAdmin" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: varName == 'value' (double-equals with single-quoted value) -->
+    <flow id="ifConditionDoubleEqualsQuotedFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="regime" val="CRISIS"/>
+            <if condition="regime == 'CRISIS'">
+                <setVar name="whenCrisis" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: varName == 'value' does NOT match when values differ -->
+    <flow id="ifConditionDoubleEqualsNoMatchFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="regime" val="NORMAL"/>
+            <if condition="regime == 'CRISIS'">
+                <setVar name="shouldNotRun" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: OR — first branch matches -->
+    <flow id="ifConditionOrFirstMatchFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="regime" val="CRISIS"/>
+            <if condition="regime == 'CRISIS' || regime == 'EXTREME'">
+                <setVar name="buyBlocked" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: OR — second branch matches -->
+    <flow id="ifConditionOrSecondMatchFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="regime" val="EXTREME"/>
+            <if condition="regime == 'CRISIS' || regime == 'EXTREME'">
+                <setVar name="buyBlocked" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: OR — neither branch matches -->
+    <flow id="ifConditionOrNoMatchFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="regime" val="NORMAL"/>
+            <if condition="regime == 'CRISIS' || regime == 'EXTREME'">
+                <setVar name="buyBlocked" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: existing single = with single-quoted value (backwards-compat) -->
+    <flow id="ifConditionSingleEqualsQuotedFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="status" val="active"/>
+            <if condition="status = 'active'">
+                <setVar name="whenActive" val="executed"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
     <!-- ForEach: run nested elements once per item in a context list var (comma-separated) -->
     <flow id="foreachFlow" defaultStep="init" errorStep="error">
         <step id="init">

@@ -44,32 +44,60 @@ public class If extends AbstractNestedDsl<IfModel, Serializable> {
     /**
      * Evaluates a condition expression:
      * - Literal: "true" / "false"
+     * - OR:  "expr1 || expr2"
      * - Var exists: "varName" (true when non-null, non-empty)
-     * - Equals: "varName=value"
-     * - Not equals: "varName!=value"
+     * - Equals: "varName = value" or "varName == value" (single-quoted values supported: 'CRISIS')
+     * - Not equals: "varName != value"
      */
     private boolean evaluateConditionExpression(CdslContext ctx, String expr) {
+        // OR: split on || and return true if any sub-expression is true
+        int orIdx = expr.indexOf("||");
+        if (orIdx > 0) {
+            return evaluateConditionExpression(ctx, expr.substring(0, orIdx).trim())
+                    || evaluateConditionExpression(ctx, expr.substring(orIdx + 2).trim());
+        }
+
         if ("true".equalsIgnoreCase(expr)) {
             return true;
         }
         if ("false".equalsIgnoreCase(expr)) {
             return false;
         }
+
         int notEq = expr.indexOf("!=");
         if (notEq > 0) {
             String varName = expr.substring(0, notEq).trim();
-            String expected = expr.substring(notEq + 2).trim();
+            String expected = stripQuotes(expr.substring(notEq + 2).trim());
             String actual = ctx.getVar(varName);
             return !expected.equals(actual);
         }
-        int eq = expr.indexOf('=');
-        if (eq > 0) {
-            String varName = expr.substring(0, eq).trim();
-            String expected = expr.substring(eq + 1).trim();
+
+        // Check == before single = to avoid consuming only the first = of ==
+        int eqEq = expr.indexOf("==");
+        if (eqEq > 0) {
+            String varName = expr.substring(0, eqEq).trim();
+            String expected = stripQuotes(expr.substring(eqEq + 2).trim());
             String actual = ctx.getVar(varName);
             return expected.equals(actual);
         }
+
+        int eq = expr.indexOf('=');
+        if (eq > 0) {
+            String varName = expr.substring(0, eq).trim();
+            String expected = stripQuotes(expr.substring(eq + 1).trim());
+            String actual = ctx.getVar(varName);
+            return expected.equals(actual);
+        }
+
         String actual = ctx.getVar(expr);
         return StringUtils.isNotEmpty(actual);
+    }
+
+    /** Strips surrounding single quotes from a value token, e.g. {@code 'CRISIS'} → {@code CRISIS}. */
+    private String stripQuotes(String s) {
+        if (s != null && s.length() >= 2 && s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'') {
+            return s.substring(1, s.length() - 1);
+        }
+        return s;
     }
 }
