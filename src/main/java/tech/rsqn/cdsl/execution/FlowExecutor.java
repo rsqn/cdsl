@@ -30,7 +30,11 @@ import java.util.Map;
 
 public class FlowExecutor implements NestedElementExecutor {
     private static final Logger logger = LoggerFactory.getLogger(FlowExecutor.class);
-    private Kryo kryo = new Kryo();
+    /**
+     * Kryo is not thread-safe. FlowExecutor is commonly wired as a singleton bean, so we must not
+     * share a Kryo instance across concurrent executions.
+     */
+    private final ThreadLocal<Kryo> kryo = ThreadLocal.withInitial(Kryo::new);
 
     @Autowired
     private FlowRegistry flowRegistry;
@@ -88,8 +92,10 @@ public class FlowExecutor implements NestedElementExecutor {
     }
 
     private Object intersectModel(Object src) {
-        Object ret = kryo.copy(src);
-        return ret;
+        if (src == null) {
+            return null;
+        }
+        return kryo.get().copy(src);
     }
 
     @Override
@@ -160,6 +166,7 @@ public class FlowExecutor implements NestedElementExecutor {
         Lock lock = null;
         CdslContext context = null;
         CdslRuntime runtime = null;
+        int exceptionsRoutedToErrorStep = 0;
 
         try {
             if (StringUtils.isEmpty(inputEvent.getContextId())) {
@@ -272,7 +279,12 @@ public class FlowExecutor implements NestedElementExecutor {
                 } catch (Exception ex) {
                     logger.warn("Exception Caught " + ex.getMessage() + " - routing to exception handling step " + flow.getErrorStep(), ex);
                     runtime.getAuditor().error(context, flow.getId(), step.getId(), null, ex);
-                    if (StringUtils.isNotEmpty(flow.getErrorStep())) {
+                    // If the error step itself throws, re-routing to it again can cause an infinite loop.
+                    if (StringUtils.isNotEmpty(flow.getErrorStep()) && (step == null || !flow.getErrorStep().equals(step.getId()))) {
+                        exceptionsRoutedToErrorStep++;
+                        if (exceptionsRoutedToErrorStep > 3) {
+                            throw new CdslException("Repeated exceptions while routing to error step " + flow.getErrorStep(), ex);
+                        }
                         nextStep = flow.fetchStep(flow.getErrorStep());
                     } else {
                         throw new CdslException(ex);
