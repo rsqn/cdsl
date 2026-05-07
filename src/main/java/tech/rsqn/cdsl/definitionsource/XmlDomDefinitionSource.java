@@ -24,10 +24,10 @@ public class XmlDomDefinitionSource {
     private static final Logger logger = LoggerFactory.getLogger(XmlDomDefinitionSource.class);
 
     public DocumentDefinition loadCdslDefinition(String resource) {
-        return loadCdslDefinition(resource, null, new HashSet<>());
+        return loadCdslDefinition(resource, new HashSet<>());
     }
 
-    private DocumentDefinition loadCdslDefinition(String resource, String namespace, Set<String> includeStack) {
+    private DocumentDefinition loadCdslDefinition(String resource, Set<String> includeStack) {
         if (StringUtils.isBlank(resource)) {
             throw new RuntimeException("CDSL resource cannot be blank");
         }
@@ -46,11 +46,7 @@ public class XmlDomDefinitionSource {
         try {
             reader = new InputStreamReader(cpr.getInputStream());
             String xmlContent = IOUtils.toString(reader);
-            DocumentDefinition parsed = parse(resource, xmlContent, includeStack);
-            if (StringUtils.isNotBlank(namespace)) {
-                applyNamespace(namespace, parsed);
-            }
-            return parsed;
+            return parse(resource, xmlContent, includeStack);
         } catch (Exception ex) {
             throw new RuntimeException("Error loading cdsl definition " + resource, ex);
         } finally {
@@ -94,10 +90,10 @@ public class XmlDomDefinitionSource {
                     throw new RuntimeException("Include resource cannot be blank in " + resource);
                 }
                 String namespace = getAttr(child, "namespace");
-                if (StringUtils.isNotBlank(namespace) && namespace.contains("-")) {
-                    throw new RuntimeException("Include namespace must not contain '-' (resource " + includeResource + " in " + resource + ")");
+                if (StringUtils.isNotBlank(namespace)) {
+                    throw new RuntimeException("Include namespace is not supported (resource " + includeResource + " in " + resource + ")");
                 }
-                DocumentDefinition inc = loadCdslDefinition(includeResource, namespace, includeStack);
+                DocumentDefinition inc = loadCdslDefinition(includeResource, includeStack);
                 ret.getFlows().addAll(inc.getFlows());
             }
         }
@@ -166,68 +162,6 @@ public class XmlDomDefinitionSource {
         }
 
         return ret;
-    }
-
-    private void applyNamespace(String namespace, DocumentDefinition def) {
-        if (def == null || def.getFlows() == null) {
-            return;
-        }
-        for (FlowDefinition flow : def.getFlows()) {
-            applyNamespace(namespace, flow);
-        }
-    }
-
-    private void applyNamespace(String namespace, FlowDefinition flow) {
-        if (flow == null) {
-            return;
-        }
-        // Rewrite defaultStep/errorStep (step ids)
-        if (StringUtils.isNotBlank(flow.getDefaultStep())) {
-            flow.setDefaultStep(namespace + "-" + flow.getDefaultStep());
-        }
-        if (StringUtils.isNotBlank(flow.getErrorStep())) {
-            flow.setErrorStep(namespace + "-" + flow.getErrorStep());
-        }
-        // Rewrite step ids and any step references inside the step bodies
-        for (ElementDefinition step : flow.getElements()) {
-            if (StringUtils.isNotBlank(step.getId())) {
-                String newId = namespace + "-" + step.getId();
-                step.setId(newId);
-                if (step.getAttrs() != null) {
-                    step.getAttrs().put("id", newId);
-                }
-            }
-            rewriteStepReferences(namespace, step);
-        }
-    }
-
-    private void rewriteStepReferences(String namespace, ElementDefinition element) {
-        if (element == null) {
-            return;
-        }
-        // Built-in step references: <routeTo target="..."/> and <await at="..."/>
-        if ("routeTo".equals(element.getName())) {
-            String target = element.getAttrs() != null ? element.getAttrs().get("target") : null;
-            if (StringUtils.isNotBlank(target)) {
-                element.getAttrs().put("target", namespace + "-" + target);
-            }
-        } else if ("await".equals(element.getName())) {
-            String at = element.getAttrs() != null ? element.getAttrs().get("at") : null;
-            if (StringUtils.isNotBlank(at)) {
-                element.getAttrs().put("at", namespace + "-" + at);
-            }
-        } else if ("whiteList".equals(element.getName())) {
-            String to = element.getAttrs() != null ? element.getAttrs().get("to") : null;
-            if (StringUtils.isNotBlank(to)) {
-                element.getAttrs().put("to", namespace + "-" + to);
-            }
-        }
-
-        if (element.getChildren() != null) {
-            for (ElementDefinition child : element.getChildren()) {
-                rewriteStepReferences(namespace, child);
-            }
-        }
     }
 
 }

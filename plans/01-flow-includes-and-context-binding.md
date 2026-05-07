@@ -1,4 +1,4 @@
-# Plan 01 — Includes, optional step namespace, flow validation, context binding
+# Plan 01 — Includes, flow validation, context binding
 
 **Status:** Draft for review  
 **Owner:** CDSL maintainers  
@@ -12,7 +12,6 @@
 | Topic | Decision |
 |-------|----------|
 | **§8.1 Root XML** | Use a **`<cdsl>`** root. **`<include>`** and **`<flow>`** are direct children of `<cdsl>`. An included file uses the **same** shape: it **stands alone** as a valid document when loaded by `RegistryLoader` on its own, and is also valid when pulled in via `<include>`—include does not imply a different or fragment-only schema. |
-| **§8.2 Namespace delimiter** | **Hyphen `-`**: prefixed step id is **`${namespace}-${originalStepId}`** (e.g. `sell` + `init` → `sell-init`). Restrict **`namespace`** to characters that keep ids unambiguous (recommend **alphanumeric only**, no `-` in the namespace token, documented in README). Step ids may still contain `-`. |
 | **§8.3 Validator strictness** | **Always fail:** no warn-only mode or Spring toggle for validation in MVP. Any check we implement (including **unreachable steps** once defined) is an **error** and fails startup / batch validate. |
 
 ---
@@ -21,7 +20,6 @@
 
 1. **Authoring scale:** Split flow XML across files; prefer an in-document **`<include>`** instead of only growing the Spring `RegistryLoader` resource list.
 2. **Composition:** Multiple flows stay **separate** in the registry; orchestration can **glue** them later (explicit handoff / app layer—see §2B). No requirement to collapse into one physical flow graph.
-3. **Optional namespaces:** When pulling definitions from a shared include, authors may want an optional **prefix on step ids** (and consistent rewrites of all references) so that included material can be dropped into a flow—or prepared for glue—without accidental duplicate **step** names **within** a single flow after merge.
 4. **Validation:** Catch **duplicate flow ids**, **duplicate step ids within a flow**, and **broken routing** (e.g. `routeTo` / `await` targets that are not steps of that flow) at **load time**, not at runtime. Today `FlowValidator` is a stub and duplicate flow ids can **silently overwrite** in `FlowRegistry.submitDefinition`.
 5. **Semantic clarity (context):** Resume with the same `contextId` must align with **which flow** owns that context (strict binding).
 
@@ -33,7 +31,7 @@
 
 | ID | Flavour | Recommendation |
 |----|---------|----------------|
-| **A3** | First-class `<include>` processed when loading CDSl XML | **Primary** — classpath-only, allowlist, max depth, cycle detection. |
+| **A3** | First-class `<include>` processed when loading CDSl XML | **Primary** — classpath-only, max depth, cycle detection. |
 | **A1** | Multi-resource `RegistryLoader` only | **Baseline**; remains supported. |
 
 ### 2B. Context ↔ flow
@@ -43,7 +41,7 @@
 | **B1** | Strict flow binding on resume | **MVP** with context. |
 | **B2** | `routeToFlow` / handoff | **Later**, when glue is productized. |
 
-**Combined MVP:** **A3 + B1 + validation (§4) + optional namespace (§3).**
+**Combined MVP:** **A3 + B1 + validation (§4).**
 
 ---
 
@@ -65,33 +63,6 @@
 
 - **Default:** registering a second flow with the same **`flow id`** is an **error** (fail at submit or at end of batch validate—see §4). This replaces today’s silent last-wins behavior.
 - **Optional later:** explicit `alias` / rename on include for library packaging (out of MVP unless trivial).
-
-### 3.3 Optional `namespace` (prefix steps)
-
-**Purpose:** When the included file is meant to be **rewritten** so every step id in every flow from that include is unique under a prefix (e.g. shared snippet file included twice with `namespace="sell"` vs `namespace="buy"`), or to align with a future glue story.
-
-**Syntax (illustrative):**
-
-```xml
-<include resource="/cdsl/lib/common-steps.xml" namespace="sell"/>
-```
-
-**When `namespace` is absent:** flows and steps from that file are registered **exactly** as written.
-
-**When `namespace` is present:** apply a **graph rewrite** to **all `<flow>` definitions** loaded from that include **before** registration:
-
-1. **Prefix** every `step` element’s `id`: `id="${namespace}-${originalId}"` (see **§0**; namespace token should not contain `-`).
-2. **Rewrite references** inside **that flow only**:
-   - Flow attributes: `defaultStep`, `errorStep` (if they name a step id).
-   - DSL attributes that reference steps: at minimum **`routeTo` `target`**, **`await` `at`** (and any other built-ins discovered during implementation).
-   - **Nested** DSL children (e.g. `if` / `foreach` bodies): recursive walk of metadata or `ElementDefinition` so nested `routeTo`/`await` are updated.
-
-**Non-goals for namespace MVP:**
-
-- Prefixing **flow** `id` (optional follow-up if we need two copies of the same logical flow id).
-- Rewriting **context variable** values that happen to look like step names.
-
-**Expert note:** Namespace is **opt-in** because it is a **breaking transform** for anyone comparing step names in audits or tests; default include leaves authoring unchanged.
 
 ---
 
@@ -130,11 +101,11 @@
 
 **In scope**
 
-- **`<include>`** with `resource` (classpath, allowlist), optional `namespace`, depth/cycle limits; expands to flows as in §3.
+- **`<include>`** with `resource` (classpath, allowlist), depth/cycle limits; expands to flows as in §3.
 - **`FlowValidator`** with checks in §4.2 (errors at minimum); wire **RegistryLoader** post-load.
 - **`FlowRegistry`:** reject duplicate flow id (or rely solely on validator—**one** place must own the error).
 - **B1 strict binding** (context flow id vs `execute(flow, …)`).
-- **Docs:** README + short `docs/` note on include, namespace, validation.
+- **Docs:** README + short `docs/` note on include and validation.
 
 **Out of scope (MVP)**
 
@@ -155,7 +126,7 @@
 
 ## 7. Definition of done
 
-- [ ] `<include>` documented with examples (with and without `namespace`).
+- [ ] `<include>` documented with examples.
 - [ ] Validator errors are actionable (flow id, step id, message).
 - [ ] Duplicate flow id never silent-overwrites.
 - [ ] `mvn clean install` green; integration test fails fast on bad XML.

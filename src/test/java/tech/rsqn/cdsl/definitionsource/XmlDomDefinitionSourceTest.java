@@ -20,7 +20,7 @@ public class XmlDomDefinitionSourceTest {
     }
 
     @Test
-    public void shouldSupportIncludeWithNamespace() {
+    public void shouldSupportInclude() {
         XmlDomDefinitionSource source = new XmlDomDefinitionSource();
         DocumentDefinition definition = source.loadCdslDefinition("cdsl/test-include-flow.xml");
         Assert.assertNotNull(definition);
@@ -33,12 +33,12 @@ public class XmlDomDefinitionSourceTest {
                 .findFirst()
                 .orElseThrow();
 
-        Assert.assertEquals(included.getDefaultStep(), "ns-init");
-        Assert.assertEquals(included.getErrorStep(), "ns-error");
+        Assert.assertEquals(included.getDefaultStep(), "init");
+        Assert.assertEquals(included.getErrorStep(), "error");
 
-        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-init".equals(e.getId())));
-        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-next".equals(e.getId())));
-        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-end".equals(e.getId())));
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "init".equals(e.getId())));
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "next".equals(e.getId())));
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "end".equals(e.getId())));
     }
 
     @Test(expectedExceptions = RuntimeException.class)

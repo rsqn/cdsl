@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <cdsl>
-    <include resource="/cdsl/test-include-lib.xml" namespace="ns"/>
+    <include resource="/cdsl/test-include-lib.xml"/>
 
     <!-- This flow exists only to prove the including file can stand alone. -->
     <flow id="includeHostFlow" defaultStep="init" errorStep="error">
