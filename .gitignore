@@ -33,3 +33,9 @@ pom.xml.releaseBackup
 # Claude Code
 .claude/.forge
 .forge
+
+# macOS
+.DS_Store
+
+# Cursor agents (local IDE state)
+.agents/
