@@ -255,6 +255,73 @@
         </step>
     </flow>
 
+    <!-- Condition expression: AND — both conjuncts true -->
+    <flow id="ifConditionAndBothMatchFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="ptAction" val="SELL"/>
+            <setVar name="dipVeto" val="false"/>
+            <if condition="ptAction == 'SELL' &amp;&amp; dipVeto != 'true'">
+                <setVar name="sellAllowed" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: AND — second conjunct false -->
+    <flow id="ifConditionAndSecondFailsFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="ptAction" val="SELL"/>
+            <setVar name="dipVeto" val="true"/>
+            <if condition="ptAction == 'SELL' &amp;&amp; dipVeto != 'true'">
+                <setVar name="sellAllowed" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: && vs || precedence — a || b && c => a || (b && c) -->
+    <flow id="ifConditionOrAndPrecedenceFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="a" val="true"/>
+            <setVar name="b" val="false"/>
+            <setVar name="c" val="false"/>
+            <if condition="a == 'true' || b == 'true' &amp;&amp; c == 'true'">
+                <setVar name="precedenceOk" val="yes"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
     <!-- Condition expression: existing single = with single-quoted value (backwards-compat) -->
     <flow id="ifConditionSingleEqualsQuotedFlow" defaultStep="init" errorStep="error">
         <step id="init">

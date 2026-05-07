@@ -44,7 +44,8 @@ public class If extends AbstractNestedDsl<IfModel, Serializable> {
     /**
      * Evaluates a condition expression:
      * - Literal: "true" / "false"
-     * - OR:  "expr1 || expr2"
+     * - OR:  "expr1 || expr2" (split before AND so {@code a || b && c} is {@code a || (b && c)})
+     * - AND: "expr1 && expr2" (after OR split, so {@code a && b || c} is {@code (a && b) || c})
      * - Var exists: "varName" (true when non-null, non-empty)
      * - Equals: "varName = value" or "varName == value" (single-quoted values supported: 'CRISIS')
      * - Not equals: "varName != value"
@@ -55,6 +56,13 @@ public class If extends AbstractNestedDsl<IfModel, Serializable> {
         if (orIdx > 0) {
             return evaluateConditionExpression(ctx, expr.substring(0, orIdx).trim())
                     || evaluateConditionExpression(ctx, expr.substring(orIdx + 2).trim());
+        }
+
+        // AND: split on && after OR (standard precedence: && tighter than ||)
+        int andIdx = expr.indexOf("&&");
+        if (andIdx > 0) {
+            return evaluateConditionExpression(ctx, expr.substring(0, andIdx).trim())
+                    && evaluateConditionExpression(ctx, expr.substring(andIdx + 2).trim());
         }
 
         if ("true".equalsIgnoreCase(expr)) {

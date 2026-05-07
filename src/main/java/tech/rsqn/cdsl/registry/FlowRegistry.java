@@ -25,6 +25,7 @@ public class FlowRegistry {
         NESTED_CONTAINER_NAMES.add("if");
         NESTED_CONTAINER_NAMES.add("foreach");
         NESTED_CONTAINER_NAMES.add("parallel");
+        NESTED_CONTAINER_NAMES.add("forEachPortfolio");
     }
 
     @Autowired

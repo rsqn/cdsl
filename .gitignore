@@ -31,4 +31,5 @@ release.properties
 pom.xml.releaseBackup
 
 # Claude Code
-.claude/
+.claude/.forge
+.forge

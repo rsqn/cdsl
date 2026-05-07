@@ -195,6 +195,36 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void shouldRunIfWhenAndConditionBothConjunctsMatch() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionAndBothMatchFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("sellAllowed"), "true",
+                "&& condition must fire when both conjuncts hold (SELL and no dip veto)");
+    }
+
+    @Test
+    public void shouldNotRunIfWhenAndConditionSecondConjunctFails() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionAndSecondFailsFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNull(context.getVar("sellAllowed"),
+                "&& must not fire when dipVeto is true even if ptAction is SELL");
+    }
+
+    @Test
+    public void shouldRespectAndOverOrPrecedenceInMixedCondition() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionOrAndPrecedenceFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("precedenceOk"), "yes",
+                "a || b && c must parse as a || (b && c), not (a || b) && c");
+    }
+
+    @Test
     public void shouldRunIfWhenSingleEqualsWithSingleQuotedValue() throws Exception {
         Flow flow = flowRegistry.getFlow("ifConditionSingleEqualsQuotedFlow");
         CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
