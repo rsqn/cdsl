@@ -42,6 +42,12 @@ public class FlowRegistry {
     }
 
     public void submitDefinition(FlowDefinition def) {
+        if (def == null || def.getId() == null) {
+            throw new RuntimeException("FlowDefinition (and id) must be provided");
+        }
+        if (flows.containsKey(def.getId())) {
+            throw new RuntimeException("Duplicate flow id '" + def.getId() + "' (definition already registered)");
+        }
         Flow flow = new Flow();
         flow.from(def);
 
@@ -72,6 +78,10 @@ public class FlowRegistry {
         }
 
         flows.put(def.getId(), flow);
+    }
+
+    public Map<String, Flow> getFlows() {
+        return flows;
     }
 
     /**

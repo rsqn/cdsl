@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<cdsl>
+    <include resource="/cdsl/test-include-lib.xml" namespace="ns"/>
+
+    <!-- This flow exists only to prove the including file can stand alone. -->
+    <flow id="includeHostFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+        </step>
+        <step id="error">
+            <endRoute/>
+        </step>
+    </flow>
+</cdsl>

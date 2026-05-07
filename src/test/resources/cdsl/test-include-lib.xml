@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<cdsl>
+    <flow id="includedFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <routeTo target="next"/>
+        </step>
+        <step id="next">
+            <await at="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+        </step>
+        <step id="error">
+            <endRoute/>
+        </step>
+    </flow>
+</cdsl>

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Required;
+import tech.rsqn.cdsl.FlowValidator;
 import tech.rsqn.cdsl.definitionsource.XmlDomDefinitionSource;
 import tech.rsqn.cdsl.definitionsource.DocumentDefinition;
 import tech.rsqn.cdsl.definitionsource.FlowDefinition;
@@ -19,6 +20,8 @@ public class RegistryLoader implements InitializingBean {
     private XmlDomDefinitionSource definitionSource;
     @Autowired
     private FlowRegistry registry;
+    @Autowired
+    private FlowValidator flowValidator;
 
     @Required
     public void setResources(List<String> resources) {
@@ -34,6 +37,7 @@ public class RegistryLoader implements InitializingBean {
                     registry.submitDefinition(flowDefinition);
                 }
             }
+            flowValidator.validateAll(registry);
             logger.info("Loading FlowRegistry - end");
         } catch ( Exception ex ) {
             logger.error("Loading FlowRegistry - failed");

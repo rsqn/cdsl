@@ -186,6 +186,14 @@ public class FlowExecutor implements NestedElementExecutor {
                 }
             }
 
+            // Bind context to the flow that owns it (prevents accidental cross-flow resumes)
+            if (StringUtils.isEmpty(context.getCurrentFlow())) {
+                context.setCurrentFlow(flow.getId());
+            } else if (!flow.getId().equals(context.getCurrentFlow())) {
+                throw new CdslException("Context " + context.getId() + " is bound to flow '" + context.getCurrentFlow() +
+                        "' but was executed with flow '" + flow.getId() + "'");
+            }
+
             // get or determine current step
             if (StringUtils.isEmpty(context.getCurrentStep())) {
                 context.setCurrentStep(flow.getDefaultStep());

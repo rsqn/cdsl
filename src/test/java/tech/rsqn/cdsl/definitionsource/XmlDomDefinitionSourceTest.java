@@ -19,6 +19,28 @@ public class XmlDomDefinitionSourceTest {
         Assert.assertFalse(definition.getFlows().isEmpty());
     }
 
+    @Test
+    public void shouldSupportIncludeWithNamespace() {
+        XmlDomDefinitionSource source = new XmlDomDefinitionSource();
+        DocumentDefinition definition = source.loadCdslDefinition("cdsl/test-include-flow.xml");
+        Assert.assertNotNull(definition);
+        Assert.assertNotNull(definition.getFlows());
+
+        Assert.assertEquals(definition.getFlows().size(), 2, "Include host should load its own flow plus one included flow");
+
+        FlowDefinition included = definition.getFlows().stream()
+                .filter(f -> "includedFlow".equals(f.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        Assert.assertEquals(included.getDefaultStep(), "ns-init");
+        Assert.assertEquals(included.getErrorStep(), "ns-error");
+
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-init".equals(e.getId())));
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-next".equals(e.getId())));
+        Assert.assertTrue(included.getElements().stream().anyMatch(e -> "ns-end".equals(e.getId())));
+    }
+
     @Test(expectedExceptions = RuntimeException.class)
     public void shouldThrowExceptionWhenResourceNotFound() {
         XmlDomDefinitionSource source = new XmlDomDefinitionSource();
