@@ -106,7 +106,7 @@ tech.rsqn.cdsl/
   - **Logic elements**: direct children (e.g. `<setVar name="x" val="y"/>`, `<routeTo target="next"/>`). Run in order; first non-null `CdslOutputEvent` stops the step and drives routing.
   - **Finally block**: one `<finally>` child containing more DSL elements. Run after logic; if they return an output, it overrides the logic output.
 - **Element names** map to DSLs: either a Spring bean name (e.g. `sayHello` for a bean named `"sayHello"`) or a class annotated with `@CdslDef("sayHello")`. Attributes and nested elements are mapped to the DSL’s model class by `DslModelBuilder` (reflection: setters and `MapModel`).
-- **Nested container elements**: `if`, `foreach`, and `parallel` are **container DSLs**: they have child elements that are executed by the framework. For these, the model is built from **attributes only** (children are not mapped to the model); children are registered as executable `DslMetadata` and run via `NestedElementExecutor` (see below).
+- **Nested container elements**: Tag names in `FlowRegistry.NESTED_CONTAINER_NAMES` — `if`, `foreach`, `parallel`, and `forEachPortfolio` — are **container DSLs**: they have child elements that are executed by the framework. For these, the model is built from **attributes only** (children are not mapped to the model); children are registered as executable `DslMetadata` and run via `NestedElementExecutor` (see below). Add more names there when you ship a custom container DSL that extends `AbstractNestedDsl`.
 
 Example:
 
@@ -146,7 +146,7 @@ Some DSL elements **contain other DSL elements** and run them as a block. The fr
 
 | XML element | Purpose | Model | Nested body behaviour |
 |-------------|---------|--------|-------------------------|
-| **if** | Run nested elements only when a condition holds. `condition` can be literal `true`/`false`, or context syntax `varName`, `varName=value`, `varName!=value`. | IfModel (condition) | Run once if condition true; Route/Await/End/Reject from body propagate. |
+| **if** | Run nested elements only when `condition` is true. Supports literals, comparisons, `&&` / `||` (see **If condition expressions** below). | IfModel (condition) | Run once if condition true; Route/Await/End/Reject from body propagate. |
 | **foreach** | Run nested elements once per item in a context list. List is a context variable (e.g. comma-separated string). Each iteration sets the current item into another context variable (`itemVar`), then runs the body. | ForEachModel (listVar, itemVar, separator) | Run in order per item; if body returns Route/Await/End/Reject, that is returned and the loop stops. |
 | **parallel** | Run all child elements in **parallel** (same context, separate CdslRuntime per branch). | MapModel | Route/Await/End from children are **ignored**; only **Reject** is propagated. |
 
@@ -170,7 +170,25 @@ Example (if with nested elements):
 <if condition="flag">...</if>                    <!-- true when ctx.getVar("flag") is non-empty -->
 <if condition="role=admin">...</if>              <!-- true when ctx.getVar("role") equals "admin" -->
 <if condition="role!=guest">...</if>             <!-- true when ctx.getVar("role") does not equal "guest" -->
+<if condition="ptAction == 'SELL' || regime == 'EXTREME'">...</if>
+<!-- In XML attributes, escape && as &amp;&amp; -->
+<if condition="ptAction == 'SELL' &amp;&amp; dipVeto != 'true'">...</if>
 ```
+
+#### If condition expressions
+
+The `condition` attribute is evaluated in `If.java` by splitting the string (not a full parser). Supported forms:
+
+| Form | Meaning |
+|------|--------|
+| `true` / `false` | Boolean literals (case-insensitive). |
+| `varName` | True when `ctx.getVar(varName)` is non-null and non-empty (“variable exists”). |
+| `varName = value`, `varName == value` | String equality; RHS can be single-quoted, e.g. `'SELL'`. |
+| `varName != value` | String inequality. |
+| Two subexpressions with `||` between them | Logical OR. Top-level `||` is split first, so mixed `&&` / `||` expressions follow Java-like precedence (`&&` tighter than OR). |
+| Two subexpressions with `&&` between them | Logical AND (after any top-level `||` has been split). |
+
+**Limits:** No parentheses. Do not put logical operators inside quoted values. In XML, write `&&` as `&amp;&amp;`.
 
 Example (foreach):
 
@@ -288,7 +306,7 @@ Example minimal integration context (see `src/test/resources/spring/test-registr
 | **foreach** | Run nested elements once per item in context list var | ForEachModel (listVar, itemVar, separator) | body output propagates, stops loop |
 | **parallel** | Run all child elements in parallel; only Reject propagates | MapModel | executeElementsIgnoreRouteOut |
 
-Step structure: **logic** elements first, then **finally** (optional). Output from **finally** overrides **logic** for routing. **Container** elements (`if`, `foreach`, `parallel`) have executable child elements; the container’s model is built from attributes only.
+Step structure: **logic** elements first, then **finally** (optional). Output from **finally** overrides **logic** for routing. **Container** elements (`if`, `foreach`, `parallel`, and any extra names in `NESTED_CONTAINER_NAMES`, such as `forEachPortfolio`) have executable child elements; the container’s model is built from attributes only.
 
 ---
 
@@ -315,7 +333,7 @@ Step structure: **logic** elements first, then **finally** (optional). Output fr
 - **XmlDomDefinitionSource.loadCdslDefinition(resource)**  
   Loads a single XML resource from classpath and returns DocumentDefinition (list of FlowDefinitions).
 
-- **Nested containers (if, foreach, parallel)**  
+- **Nested containers (`if`, `foreach`, `parallel`, `forEachPortfolio`, …)**  
   FlowRegistry treats tag names in `NESTED_CONTAINER_NAMES` specially: model from attributes only, children become `DslMetadata` attached via `meta.addChildElement(childMeta)`. Container DSLs extend `AbstractNestedDsl` and call `runNestedElements(runtime, ctx, input)`, which uses `runtime.getCurrentElementMetadata().getChildElements()` and `runtime.getNestedElementExecutor().executeElements(...)`. FlowExecutor implements NestedElementExecutor and sets it (and currentFlow, currentStep, currentElementMetadata) on the runtime before running each element.
 
 ---

@@ -14,7 +14,8 @@ import java.io.Serializable;
 
 /**
  * Container DSL: runs nested elements only when the condition holds.
- * Supports condition expression (literal or context syntax) or legacy var/val.
+ * Supports condition expression (literal or context syntax) or legacy var/val;
+ * see project README ("If condition expressions") for {@code &&}, {@code ||}, and precedence.
  */
 @CdslDef("if")
 @CdslModel(IfModel.class)
