@@ -277,6 +277,105 @@
         </step>
     </flow>
 
+    <!-- Condition expression: AND keyword — XML-friendly alternative to &amp;&amp; -->
+    <flow id="ifConditionAndKeywordFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="ptAction" val="SELL"/>
+            <setVar name="dipVeto" val="false"/>
+            <if condition="ptAction == 'SELL' AND dipVeto != 'true'">
+                <setVar name="sellAllowedKeyword" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: NOT keyword (unary) -->
+    <flow id="ifConditionNotKeywordFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="flag" val="set"/>
+            <if condition="NOT flag">
+                <setVar name="shouldNotRun" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <if condition="NOT missingFlag">
+                <setVar name="notMissingFlagRan" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: XOR keyword -->
+    <flow id="ifConditionXorKeywordFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="a" val="true"/>
+            <setVar name="b" val="false"/>
+            <if condition="a == 'true' XOR b == 'true'">
+                <setVar name="xorOk" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: parentheses override precedence -->
+    <flow id="ifConditionParenthesesOverrideFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="a" val="true"/>
+            <setVar name="b" val="false"/>
+            <setVar name="c" val="false"/>
+
+            <!-- Without parentheses: a || (b && c) => true || (false && false) => true -->
+            <if condition="a == 'true' || b == 'true' AND c == 'true'">
+                <setVar name="noParensResult" val="true"/>
+            </if>
+
+            <!-- With parentheses: (a || b) && c => (true || false) && false => false -->
+            <if condition="(a == 'true' || b == 'true') AND c == 'true'">
+                <setVar name="parensResult" val="true"/>
+            </if>
+
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
     <!-- Condition expression: AND — second conjunct false -->
     <flow id="ifConditionAndSecondFailsFlow" defaultStep="init" errorStep="error">
         <step id="init">

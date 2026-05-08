@@ -146,7 +146,7 @@ Some DSL elements **contain other DSL elements** and run them as a block. The fr
 
 | XML element | Purpose | Model | Nested body behaviour |
 |-------------|---------|--------|-------------------------|
-| **if** | Run nested elements only when `condition` is true. Supports literals, comparisons, `&&` / `||` (see **If condition expressions** below). | IfModel (condition) | Run once if condition true; Route/Await/End/Reject from body propagate. |
+| **if** | Run nested elements only when `condition` is true. Supports literals, comparisons, keywords `AND` / `OR` / `NOT` / `XOR`, symbols `&&` / `||` / `!`, and parentheses (see **If condition expressions** below). | IfModel (condition) | Run once if condition true; Route/Await/End/Reject from body propagate. |
 | **foreach** | Run nested elements once per item in a context list. List is a context variable (e.g. comma-separated string). Each iteration sets the current item into another context variable (`itemVar`), then runs the body. | ForEachModel (listVar, itemVar, separator) | Run in order per item; if body returns Route/Await/End/Reject, that is returned and the loop stops. |
 | **parallel** | Run all child elements in **parallel** (same context, separate CdslRuntime per branch). | MapModel | Route/Await/End from children are **ignored**; only **Reject** is propagated. |
 
@@ -171,24 +171,98 @@ Example (if with nested elements):
 <if condition="role=admin">...</if>              <!-- true when ctx.getVar("role") equals "admin" -->
 <if condition="role!=guest">...</if>             <!-- true when ctx.getVar("role") does not equal "guest" -->
 <if condition="ptAction == 'SELL' || regime == 'EXTREME'">...</if>
-<!-- In XML attributes, escape && as &amp;&amp; -->
+<if condition="regime == 'CRISIS' OR regime == 'EXTREME'">...</if>   <!-- same as || -->
+<!-- Prefer XML-friendly keywords for conjunction -->
+<if condition="ptAction == 'SELL' AND dipVeto != 'true'">...</if>
+<!-- Still supported in XML attributes (escape && as &amp;&amp;) -->
 <if condition="ptAction == 'SELL' &amp;&amp; dipVeto != 'true'">...</if>
+<!-- NOT: negation of "variable exists" or of a subexpression in parentheses -->
+<if condition="NOT dipVeto">...</if>
+<if condition="NOT (a == 'true' AND b == 'true')">...</if>
+<!-- XOR: true when exactly one side is true (boolean exclusive-or) -->
+<if condition="a == 'true' XOR b == 'true'">...</if>
+<!-- Parentheses override default grouping -->
+<if condition="(a == 'true' OR b == 'true') AND c == 'true'">...</if>
 ```
 
 #### If condition expressions
 
-The `condition` attribute is evaluated in `If.java` by splitting the string (not a full parser). Supported forms:
+The `condition` attribute is evaluated in `If.java` with a small tokenizer and recursive-descent parser (not arbitrary Java expressions).
+
+##### Literals and comparisons
 
 | Form | Meaning |
 |------|--------|
-| `true` / `false` | Boolean literals (case-insensitive). |
+| `true` / `false` | Boolean literals (**case-insensitive**). |
 | `varName` | True when `ctx.getVar(varName)` is non-null and non-empty (“variable exists”). |
-| `varName = value`, `varName == value` | String equality; RHS can be single-quoted, e.g. `'SELL'`. |
-| `varName != value` | String inequality. |
-| Two subexpressions with `||` between them | Logical OR. Top-level `||` is split first, so mixed `&&` / `||` expressions follow Java-like precedence (`&&` tighter than OR). |
-| Two subexpressions with `&&` between them | Logical AND (after any top-level `||` has been split). |
+| `varName = value`, `varName == value` | String equality against the context variable named `varName`; `value` can be bare or single-quoted, e.g. `'SELL'`. Whitespace around `=` / `==` is allowed (e.g. `role == admin`). |
+| `varName != value` | String inequality; quoted RHS is supported like `==`. |
 
-**Limits:** No parentheses. Do not put logical operators inside quoted values. In XML, write `&&` as `&amp;&amp;`.
+##### Logical operators: symbols and keywords
+
+You may use either **symbols** or **uppercase keywords**; they mean the same thing:
+
+| Symbol | Keyword | Meaning |
+|--------|---------|--------|
+| `&&` | `AND` | Logical AND |
+| `&#124;&#124;` (two pipe characters) | `OR` | Logical OR |
+| `!` | `NOT` | Logical negation (unary) |
+| — | `XOR` | Logical exclusive OR: true when exactly one operand is true (no `^` symbol) |
+
+Keywords **`AND`**, **`OR`**, **`NOT`**, **`XOR`** must be spelled **uppercase**. Lowercase spellings (`and`, `or`, …) are **not** operators; they are treated as identifiers (variable names).
+
+##### Precedence (tightest first)
+
+Evaluation order without parentheses:
+
+1. **Atoms**: literals (`true`/`false`), comparisons, bare `varName` (“exists” check).
+2. **`NOT`** / **`!`**: unary; multiple `NOT`/`!` stack (`NOT NOT x` means “not (not x)”).
+3. **`AND`** / **`&&`**: conjunction.
+4. **`XOR`**: exclusive OR.
+5. **`OR`** / **two-pipe** `||`: disjunction (**loosest**).
+
+**Parentheses** `( ... )` override the above at any level.
+
+##### Associativity
+
+Chained operators of the same kind are **left-associative**:
+
+- `A AND B AND C` means `(A AND B) AND C`.
+- `A XOR B XOR C` means `(A XOR B) XOR C` (same as Java `^` on booleans).
+- `A OR B OR C` means `(A OR B) OR C`.
+
+##### Default grouping examples (no parentheses)
+
+- **`A AND B OR C`** is **`(A AND B) OR C`** — AND is tighter than OR.
+- **`A OR B AND C`** is **`A OR (B AND C)`** — AND is still tighter than OR.
+- **`A AND B XOR C OR D`** is **`((A AND B) XOR C) OR D`** — apply NOT (if any), then AND, then XOR, then OR.
+
+##### XOR detail
+
+`XOR` uses **boolean** exclusive-or: both sides are evaluated as boolean subexpressions; the result is true when **exactly one** side is true. There is no symbolic `^` in the condition language; use the keyword `XOR`.
+
+##### XML attribute escaping
+
+Attributes are XML text. Rules that affect conditions:
+
+| You want | In XML attribute you write |
+|---------|----------------------------|
+| `&&` between subexpressions | `&amp;&amp;` (or use **`AND`** and avoid `&` entirely). |
+| `>` in a comparison | `&gt;` |
+| `<` | `&lt;` |
+
+If a raw **`&`** appears where `&&` was intended unescaped, load/evaluation may fail; use `&amp;&amp;` or **`AND`**. The implementation may reject a stray **`&`** with a hint to use **`AND`** or **`&amp;&amp;`**.
+
+##### Identifiers vs keywords
+
+Word tokens (`AND`, `OR`, …) match as **whole words** only. For example **`BAND`** is a single identifier (variable name), not `B` + `AND`.
+
+##### Limitations and good practice
+
+- Do **not** put logical operators **inside** single-quoted values; quoted segments are string literals, not expressions.
+- **Comparisons** are only `=`, `==`, and `!=` (string equality or inequality to a context variable’s value). There is no numeric `<` / `>` / `>=` operator in the condition language—model those as context variables and compare as strings if needed.
+- No function calls, no arbitrary Java-style expressions.
+- **Parentheses** must be balanced; unmatched `(` or `)` is an error.
 
 Example (foreach):
 

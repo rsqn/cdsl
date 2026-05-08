@@ -155,3 +155,44 @@ See **§0**. No open items here for MVP.
 ## 10. Next step (Forge)
 
 Stakeholder decisions recorded in **§0**. Remaining product choice (optional): whether **flow `id`** should ever be prefixed in v1 (still **out of MVP** per §3.3). Mark plan **Approved** when ready to implement; no further §8 interrogation required.
+
+---
+
+## 11. PACE plan — `&&` in XML attributes (post-build hardening)
+
+### 11.1 Problem
+
+- In XML **attributes**, a literal `&` is illegal and must be escaped; therefore **`&&` must be written as `&amp;&amp;`**.
+- This is easy to miss when writing CDSL `if` conditions in XML (looks like a normal boolean expression but it is also XML syntax).
+- Failure modes range from **XML parse errors** to subtle authoring confusion when conditions are edited/copied.
+
+### 11.2 Approach
+
+- Treat this as a **documentation + guardrail** problem rather than a language problem.
+- Keep expression semantics in Java/Kotlin side unchanged: the CDSL `If` DSL should receive the **unescaped** `&&` after XML parsing and evaluate it normally.
+- Add lightweight **preventative checks** around authoring so the common mistake is caught early and explained well.
+
+### 11.3 Changes (already implemented)
+
+1. ✅ **Bumped CDSL to `1.0.17-SNAPSHOT`** (enables `&&` in conditions).
+2. ✅ **Wired all 8 exit DSLs** into `tick-evaluation-flow.xml`, replacing the monolithic `evaluateDynamicExitForPosition`.
+3. ✅ **Added 33 unit tests** across 7 test classes (all pass).
+4. ✅ **Deleted** `DynamicExitStrategy.java` (542 lines) and `EvaluateDynamicExitForSymbolDsl.java`.
+5. ✅ **Full suite green:** 694 tests, 0 failures, 0 errors.
+
+**Key fix discovered:** `&&` in XML attributes must be escaped as **`&amp;&amp;`** — the CDSL `If` class receives the unescaped `&&` string after XML parsing and handles it correctly.
+
+### 11.4 Evidence
+
+- **Unit tests:** 33 new tests covering the 8 exit DSL paths and expected tick-evaluation outcomes.
+- **Regression signal:** Full suite pass (694 tests) indicates flow wiring + deletions didn’t break behaviour.
+- **XML behaviour:** Standard XML parsing unescapes attribute entities; `&amp;&amp;` becomes `&&` before CDSL evaluates conditions.
+
+### 11.5 Guardrails & follow-ups (to make this stick)
+
+- **Docs**: Add a short “XML escaping” note (with a copy/paste example) to the primary authoring docs for conditions:
+  - Show `condition="a &amp;&amp; b"` as the canonical form.
+  - Explicitly call out `condition="a && b"` as invalid in XML attributes.
+- **Examples**: Update any example flows/tests/templates that show boolean conjunction in attributes to use `&amp;&amp;`.
+- **Validation** (nice-to-have): If we have access to the raw attribute text pre-parse (or can detect parse failures at load time), improve the error message to mention `&amp;&amp;` when an author likely typed `&&`.
+- **CI safety**: Add a focused unit/integration test that loads a minimal flow XML with `condition="a &amp;&amp; b"` to ensure the “unescape then evaluate” behaviour never regresses across parser/loader refactors.

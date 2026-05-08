@@ -205,6 +205,50 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void shouldRunIfWhenAndKeywordConditionBothConjunctsMatch() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionAndKeywordFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("sellAllowedKeyword"), "true",
+                "AND keyword must work in XML attributes as a readable alternative to &amp;&amp;");
+    }
+
+    @Test
+    public void shouldSupportNotKeywordUnaryOperator() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionNotKeywordFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNull(context.getVar("shouldNotRun"),
+                "NOT flag must be false when flag exists and is non-empty");
+        Assert.assertEquals(context.getVar("notMissingFlagRan"), "true",
+                "NOT missingFlag must be true when missingFlag is empty/non-existent");
+    }
+
+    @Test
+    public void shouldSupportXorKeywordOperator() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionXorKeywordFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("xorOk"), "true",
+                "XOR must be true when exactly one side is true");
+    }
+
+    @Test
+    public void shouldAllowParenthesesToOverridePrecedence() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifConditionParenthesesOverrideFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("noParensResult"), "true",
+                "Without parentheses, OR must win via a || (b && c)");
+        Assert.assertNull(context.getVar("parensResult"),
+                "With parentheses, (a || b) && c must be false when c is false");
+    }
+
+    @Test
     public void shouldNotRunIfWhenAndConditionSecondConjunctFails() throws Exception {
         Flow flow = flowRegistry.getFlow("ifConditionAndSecondFailsFlow");
         CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
