@@ -100,7 +100,7 @@ public class CdslContext {
         return (T) vars.get(k);
     }
 
-    public void putTransient(String k, String v) {
+    public void putTransient(String k, Object v) {
         transientVars.put(k, v);
     }
 
