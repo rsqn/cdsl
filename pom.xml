@@ -9,7 +9,7 @@
 
     <groupId>tech.rsqn.cdsl</groupId>
     <artifactId>cdsl</artifactId>
-    <version>1.0.19-SNAPSHOT</version>
+    <version>1.0.19</version>
     <packaging>jar</packaging>
 
     <name>cdsl</name>
@@ -34,7 +34,7 @@
         <connection>scm:git:git@github.com:rsqn/cdsl.git</connection>
         <developerConnection>scm:git:git@github.com:rsqn/cdsl.git</developerConnection>
         <url>https://github.com/rsqn/cdsl</url>
-        <tag>HEAD</tag>
+        <tag>cdsl-1.0.19</tag>
     </scm>
 
     <licenses>
