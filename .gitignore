@@ -39,3 +39,4 @@ pom.xml.releaseBackup
 
 # Cursor agents (local IDE state)
 .agents/
+.claude/
