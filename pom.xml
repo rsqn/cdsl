@@ -111,7 +111,7 @@
         <dependency>
             <groupId>tech.rsqn.useful-things</groupId>
             <artifactId>simple-utilities</artifactId>
-            <version>1.0.98-SNAPSHOT</version>
+            <version>1.0.99</version>
             <scope>compile</scope>
         </dependency>
 
