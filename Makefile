@@ -49,7 +49,7 @@ build:
 # ~/.m2/settings.xml under server id "ossrh".
 
 release: check-clean
-	$(MVN) release:prepare release:perform
+	$(MVN) -B release:prepare release:perform
 
 # Rehearse without writing anything (no commits, no tags, no deploy)
 release-dry-run:
