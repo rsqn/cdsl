@@ -324,6 +324,15 @@ public class If extends AbstractNestedDsl<IfModel, Serializable> {
                 return false;
             }
 
+            // Function call: isNotEmpty(varName)
+            if ("isNotEmpty".equals(ident) && ts.peek().type == TokenType.LPAREN) {
+                ts.next(); // consume (
+                Token arg = ts.expect(TokenType.IDENT, ts.fullExpr);
+                ts.expect(TokenType.RPAREN, ts.fullExpr);
+                String val = ctx.getVar(arg.text);
+                return StringUtils.isNotEmpty(val);
+            }
+
             // Comparison?
             Token op = ts.peek();
             if (op.type == TokenType.NOTEQ || op.type == TokenType.EQEQ || op.type == TokenType.EQ) {

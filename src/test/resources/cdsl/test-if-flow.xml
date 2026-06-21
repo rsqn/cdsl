@@ -442,6 +442,68 @@
         </step>
     </flow>
 
+    <!-- Condition expression: isNotEmpty(varName) — var is set -->
+    <flow id="ifIsNotEmptySetFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <setVar name="decisions" val="VIM-USDT,GUA-USDT"/>
+            <if condition="isNotEmpty(decisions)">
+                <setVar name="isNotEmptyResult" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: isNotEmpty(varName) — var is not set -->
+    <flow id="ifIsNotEmptyUnsetFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <if condition="isNotEmpty(missingVar)">
+                <setVar name="shouldNotRun" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <setVar name="isNotEmptyUnsetResult" val="skipped"/>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
+    <!-- Condition expression: NOT isNotEmpty(varName) — var is not set, so NOT isNotEmpty = true -->
+    <flow id="ifNotIsNotEmptyUnsetFlow" defaultStep="init" errorStep="error">
+        <step id="init">
+            <setState val="Alive"/>
+            <if condition="NOT isNotEmpty(missingVar)">
+                <setVar name="notIsNotEmptyResult" val="true"/>
+                <routeTo target="end"/>
+            </if>
+            <routeTo target="end"/>
+        </step>
+        <step id="end">
+            <endRoute/>
+            <finally><setState val="End"/></finally>
+        </step>
+        <step id="error">
+            <setState val="Error"/>
+            <endRoute/>
+        </step>
+    </flow>
+
     <!-- ForEach: run nested elements once per item in a context list var (comma-separated) -->
     <flow id="foreachFlow" defaultStep="init" errorStep="error">
         <step id="init">

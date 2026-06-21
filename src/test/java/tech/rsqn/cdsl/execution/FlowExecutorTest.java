@@ -704,4 +704,66 @@ public class FlowExecutorTest extends AbstractTestNGSpringContextTests {
 
     }
 
+    @Test
+    public void shouldPassTransientVariablesOfDifferentTypesBetweenStepsInFlow() throws Exception {
+        Flow flow = flowRegistry.getFlow("shouldPassOutputValues");
+        Assert.assertEquals(contextRepository.getContexts().size(), 0);
+
+        final java.util.Map<String, String> testMap = new java.util.HashMap<>();
+        testMap.put("key", "value");
+        final Integer testInt = 12345;
+
+        final AtomicReference<java.util.Map<String, String>> retrievedMap = new AtomicReference<>();
+        final AtomicReference<Integer> retrievedInt = new AtomicReference<>();
+
+        dslHelper.inject("injectedOne", (runtime, ctx, model, input)-> {
+            ctx.putTransient("mapVar", testMap);
+            ctx.putTransient("intVar", testInt);
+            return null;
+        });
+
+        dslHelper.inject("injectedTwo", (runtime, ctx, model, input)-> {
+            retrievedMap.set(ctx.fetchTransient("mapVar"));
+            retrievedInt.set(ctx.fetchTransient("intVar"));
+            return null;
+        });
+
+        CdslFlowOutputEvent output = executor.execute(flow, new CdslInputEvent().with("test", "message").andModel(""));
+
+        Assert.assertNotNull(output);
+        Assert.assertEquals(retrievedMap.get(), testMap);
+        Assert.assertEquals(retrievedInt.get(), testInt);
+    }
+
+    @Test
+    public void shouldRunIfWhenIsNotEmptyVarIsSet() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifIsNotEmptySetFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("isNotEmptyResult"), "true",
+                "isNotEmpty(decisions) should be true when var is set");
+    }
+
+    @Test
+    public void shouldSkipIfWhenIsNotEmptyVarIsUnset() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifIsNotEmptyUnsetFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertNull(context.getVar("shouldNotRun"),
+                "isNotEmpty(missingVar) should be false when var is not set");
+        Assert.assertEquals(context.getVar("isNotEmptyUnsetResult"), "skipped");
+    }
+
+    @Test
+    public void shouldRunIfWhenNotIsNotEmptyVarIsUnset() throws Exception {
+        Flow flow = flowRegistry.getFlow("ifNotIsNotEmptyUnsetFlow");
+        CdslFlowOutputEvent output = (CdslFlowOutputEvent) executor.execute(flow, new CdslInputEvent().with("test", "message"));
+        Assert.assertNotNull(output);
+        CdslContext context = contextRepository.getContext(output.getContextId());
+        Assert.assertEquals(context.getVar("notIsNotEmptyResult"), "true",
+                "NOT isNotEmpty(missingVar) should be true when var is not set");
+    }
+
 }
